@@ -10,7 +10,14 @@ from pyunit import T
 import pyunit_mocks as mck
 
 
-class TDDReportJsonFX:
+class ReportMockSuite:
+
+    def __init__(self):
+        self.reportIO = mck.Out()
+
+
+class TDDReportJson(ReportMockSuite):
+    """test suite for TDD-cycle reporting"""
 
     def passing_test(self, _: T):
         pass
@@ -19,20 +26,17 @@ class TDDReportJsonFX:
         t.truthy(False)
 
 
-class FailTest:
-
-    def __init__(self):
-        self.reportIO = mck.Out()
+class FailTest(ReportMockSuite):
+    """test suit for testing failing a test"""
 
     def failed_test(self, t: T):
         t.failed("test has failed")
 
 
-class FatalTest:
+class FatalTest(ReportMockSuite):
     """suit testing failing and stopping of test execution"""
 
     def __init__(self):
-        self.reportIO = mck.Out()
         self.changed_after_fatal = False
 
     def fatal_test(self, t: T):
