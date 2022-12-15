@@ -33,4 +33,5 @@ class T(object):
     def fatal_if_not(self, b: bool):
         if b:
             return
-        self.fatal("expected '{}' to be truthy".format(b))
+        # don't call fatal to not report test as failed
+        raise FatalError()
