@@ -25,11 +25,11 @@ SPECIAL = {}
 @dataclass
 class Config:
     """configuration for test-runs"""
-    reporter: reporting.Report
+    reporter: reporting.Report = None
     out: TextIO = sys.stderr
 
 
-def runTests(suite: any, config: Config = None):
+def run_tests(suite: any, config: Config = None):
     """
     run executes *every* callable c (i.e also static or class methods) of
     given suite iff c is non-special and non-dunder.  Each call gets a T
@@ -51,8 +51,12 @@ def runTests(suite: any, config: Config = None):
     except TypeError:
         s = suite
     config = config or Config()
-
     report = config.reporter or reporting.Default()
+    def counter(): return None
+    try:
+        counter = report.increase_test_count
+    except AttributeError:
+        pass
 
     tt = [t for t in dir(s)
           if callable(getattr(s, t, None))
@@ -62,7 +66,11 @@ def runTests(suite: any, config: Config = None):
     for t in tt:
         test = getattr(s, t)
         try:
-            test(T(lambda failed: report.appendTest(t, failed)))
+            test(T(
+                fail=lambda: report.fail(t),
+                log=lambda msg: report.log(t, msg)
+            ))
+            counter()
         except FatalError:
             pass
     report.print(s.__class__.__name__, config.out)

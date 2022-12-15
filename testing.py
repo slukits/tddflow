@@ -4,6 +4,9 @@
 # Use of this source code is governed by a MIT-style
 # license that can be found in the LICENSE file.
 
+from typing import Callable
+
+
 class FatalError(Exception):
     pass
 
@@ -15,8 +18,18 @@ class T(object):
     t.truthy).
     """
 
-    def __init__(self, failed: callable):
-        self.__failed = failed
+    def __init__(self, fail: callable, log: Callable[[str, str], None]):
+        self.__fail = fail
+        self.__log = log
+
+    def failed(self, log: str):
+        """
+        failed flags a test as failed with given log message and
+        continues it's execution.
+        """
+        self.__fail()
+        if log:
+            self.__log(log)
 
     def truthy(self, value: any) -> bool:
         """
@@ -25,14 +38,8 @@ class T(object):
         """
         if value:
             return True
-        self.__failed(True)
-
-    def failed(self, log: str):
-        """
-        failed flags a test as failed with given log message and
-        continues it's execution.
-        """
-        self.__failed(log)
+        self.failed(f'expected \'{value}\' to be truthy')
+        return False
 
     def fatal(self, log: str = ""):
         """
