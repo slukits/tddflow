@@ -155,7 +155,7 @@ if __name__ == "__main__":
 
 Now needs to be decided what is implemented next.  I choose the order
 
-    * minimal reporting for TDD-cycle
+    * [minimal reporting for TDD-cycle](02_tdd_reporting.md)
     * more sophisticated assertions
     * a choice to exit a failed test-run at once or to continue it
     * having special methods like init, setUp, tearDown and final
