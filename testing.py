@@ -18,19 +18,34 @@ class T(object):
     def __init__(self, failed: callable):
         self.__failed = failed
 
-    def truthy(self, value) -> bool:
+    def truthy(self, value: any) -> bool:
+        """
+        truthy fails calling test if given value is not truthy and
+        returns False; otherwise True is returned
+        """
         if value:
             return True
         self.__failed(True)
 
     def failed(self, log: str):
+        """
+        failed flags a test as failed with given log message and
+        continues it's execution.
+        """
         self.__failed(log)
 
     def fatal(self, log: str = ""):
+        """
+        fatal reports a tests as failed with given log message and stops
+        it's execution immediately.
+        """
         self.failed(log)
         raise FatalError()
 
     def fatal_if_not(self, b: bool):
+        """
+        fatal_if_not stops test execution if given bool b is not truthy
+        """
         if b:
             return
         # don't call fatal to not report test as failed
