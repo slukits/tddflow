@@ -25,8 +25,8 @@ SPECIAL = {}
 @dataclass
 class Config:
     """configuration for test-runs"""
+    reporter: reporting.Report
     out: TextIO = sys.stderr
-    reportType: int = ReportType.Default
 
 
 def runTests(suite: any, config: Config = None):
@@ -52,12 +52,7 @@ def runTests(suite: any, config: Config = None):
         s = suite
     config = config or Config()
 
-    report = None
-    match config.reportType:
-        case ReportType.TDD:
-            report = reporting.TDD()
-        case _:
-            report = reporting.Default()
+    report = config.reporter or reporting.Default()
 
     tt = [t for t in dir(s)
           if callable(getattr(s, t, None))
