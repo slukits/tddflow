@@ -1,0 +1,8 @@
+#!/usr/bin/bash
+
+# runs all pyunit test with default reporter, i.e. has no output iff all
+# tests pass.
+
+for t in *_test.py; do
+    [ -f "$t" ] && python "$t"
+done
