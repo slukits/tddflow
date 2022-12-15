@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from enum import Enum
 import sys
 
-from testing import T
+from testing import T, FatalError
 import reporting
 
 
@@ -65,7 +65,9 @@ def runTests(suite: any, config: Config = None):
           and not t.startswith('_')
           ]
     for t in tt:
-        getattr(s, t)(T(
-            lambda failed: report.appendTest(t, failed)
-        ))
+        test = getattr(s, t)
+        try:
+            test(T(lambda failed: report.appendTest(t, failed)))
+        except FatalError:
+            pass
     report.print(s.__class__.__name__, config.out)

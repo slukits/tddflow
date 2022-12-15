@@ -26,3 +26,19 @@ class FailTest:
 
     def failed_test(self, t: T):
         t.failed("test has failed")
+
+
+class FatalTest:
+    """suit testing failing and stopping of test execution"""
+
+    def __init__(self):
+        self.reportIO = mck.Out()
+        self.changed_after_fatal = False
+
+    def fatal_test(self, t: T):
+        t.fatal("test run is stopped and has failed")
+        self.changed_after_fatal = True
+
+    def fatal_if_not_test(self, t: T):
+        t.fatal_if_not(False)
+        self.changed_after_fatal = True
