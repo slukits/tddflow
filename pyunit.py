@@ -6,7 +6,17 @@
 
 from typing import NamedTuple, List, TextIO
 from dataclasses import dataclass
+from enum import Enum
 import sys
+
+from testing import T
+import reporting
+
+
+class ReportType(Enum):
+    Default = 0
+    TDD = 1
+
 
 SPECIAL = {}
 """SPECIAL holds all names of test suite methods considered special."""
@@ -16,6 +26,7 @@ SPECIAL = {}
 class Config:
     """configuration for test-runs"""
     out: TextIO = sys.stderr
+    reportType: int = ReportType.Default
 
 
 def runTests(suite: any, config: Config = None):
@@ -39,7 +50,14 @@ def runTests(suite: any, config: Config = None):
         s = suite()
     except TypeError:
         s = suite
-    config, report = config or Config(), Report()
+    config = config or Config()
+
+    report = None
+    match config.reportType:
+        case ReportType.TDD:
+            report = reporting.TDD()
+        case _:
+            report = reporting.Default()
 
     tt = [t for t in dir(s)
           if callable(getattr(s, t, None))
@@ -50,49 +68,4 @@ def runTests(suite: any, config: Config = None):
         getattr(s, t)(T(
             lambda failed: report.appendTest(t, failed)
         ))
-    report.tests(s.__class__.__name__, config.out)
-
-
-class T(object):
-    """
-    A T instance t provides means to communicate with the testing
-    framework (e.g. t.breakIfNot) and to assert expected behavior (e.g.
-    t.truthy).
-    """
-
-    def __init__(self, failed: callable):
-        self.__failed = failed
-
-    def truthy(self, value) -> bool:
-        if value:
-            return True
-        self.__failed(True)
-
-
-class Test(NamedTuple):
-    name: str
-    failed: bool
-
-
-class Report(object):
-    """
-    A Report is used by a Suite instance to generate the desired output
-    about a test run.
-    """
-
-    def __init__(self):
-        self._tt = []  # type: List[Test]
-        self._fails = 0
-
-    def appendTest(self, name: str, failed: bool):
-        if failed:
-            self._fails += 1
-        self._tt.append(Test(name, failed))
-
-    def tests(self, suite: str, out: TextIO):
-        if len(self._tt) == 0:
-            return
-        print("{} ({}/{})".format(
-            suite, len(self._tt), self._fails), file=out)
-        for t in self._tt:
-            print("  {}".format(t.name), file=out)
+    report.print(s.__class__.__name__, config.out)

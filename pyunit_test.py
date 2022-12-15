@@ -68,7 +68,8 @@ used for further tests of pyunit.
 
 import io
 
-from pyunit import T
+from testing import T
+from pyunit_mocks import OutMock
 
 
 class TestTestRun():
@@ -88,17 +89,6 @@ class TestTestingTInstance():
 
     def got_testing_T_instance(self, t: T):
         self.gotTestingTInstance = isinstance(t, T)
-
-
-class OutMock(io.StringIO):
-
-    def __init__(self, io_callback: callable):
-        super().__init__()
-        self.__io_callback = io_callback
-
-    def write(self, s: str) -> int:
-        self.__io_callback(s)
-        return super().write(s)
 
 
 class TestTrueAssertion():
