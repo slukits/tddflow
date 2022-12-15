@@ -15,14 +15,14 @@ class t:
 
     def fails_a_test_on_request(self, t: T):
         suite = fx.FailTest()
-        pyunit.runTests(suite, pyunit.Config(out=suite.reportIO))
+        pyunit.run_tests(suite, pyunit.Config(out=suite.reportIO))
         t.truthy("failed_test" in suite.reportIO.getvalue())
 
     def stops_and_fails_a_test_on_request(self, t: T):
         suite = fx.FatalTest()
-        pyunit.runTests(suite, pyunit.Config(out=suite.reportIO))
+        pyunit.run_tests(suite, pyunit.Config(out=suite.reportIO))
         t.truthy(not suite.changed_after_fatal)
 
 
 if __name__ == '__main__':
-    pyunit.runTests(t)
+    pyunit.run_tests(t)

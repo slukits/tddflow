@@ -22,11 +22,11 @@ True
 
 A suite test is executed on a (suite) test run:
 
->>> from pyunit import runTests, Config
+>>> from pyunit import run_tests, Config
 >>> s = TestTestRun()
 >>> s.suiteTestHasRun
 False
->>> runTests(s)
+>>> run_tests(s)
 >>> s.suiteTestHasRun
 True
 
@@ -35,7 +35,7 @@ A suite test has an Testing instance provided on execution:
 >>> s = TestTestingTInstance()
 >>> s.gotTestingTInstance
 False
->>> runTests(s)
+>>> run_tests(s)
 >>> s.gotTestingTInstance
 True
 
@@ -46,7 +46,7 @@ A suite test fails if truthy assertion fails:
 False
 >>> s.passedTrueAssertion
 False
->>> runTests(s, Config(out=s.reportIO))
+>>> run_tests(s, Config(out=s.reportIO))
 >>> s.failedTrueAssertion
 True
 >>> s.passedTrueAssertion

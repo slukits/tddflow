@@ -16,7 +16,7 @@ class ReportMockSuite:
         self.reportIO = mck.Out()
 
 
-class TDDReportJson(ReportMockSuite):
+class TDDReport(ReportMockSuite):
     """test suite for TDD-cycle reporting"""
 
     def passing_test(self, _: T):
@@ -37,6 +37,7 @@ class FatalTest(ReportMockSuite):
     """suit testing failing and stopping of test execution"""
 
     def __init__(self):
+        super().__init__()
         self.changed_after_fatal = False
 
     def fatal_test(self, t: T):
