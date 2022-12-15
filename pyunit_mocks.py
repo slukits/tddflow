@@ -7,12 +7,13 @@
 import io
 
 
-class OutMock(io.StringIO):
+class Out(io.StringIO):
 
-    def __init__(self, io_callback: callable):
+    def __init__(self, io_callback: callable = None):
         super().__init__()
         self.__io_callback = io_callback
 
     def write(self, s: str) -> int:
-        self.__io_callback(s)
+        if self.__io_callback is not None:
+            self.__io_callback(s)
         return super().write(s)

@@ -12,3 +12,6 @@ class T(object):
         if value:
             return True
         self.__failed(True)
+
+    def failed(self, log: str):
+        self.__failed(log)

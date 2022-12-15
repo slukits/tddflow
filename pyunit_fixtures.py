@@ -7,6 +7,7 @@
 # pyunit fixtures contains test suites used as fixtures for test.
 
 from pyunit import T
+import pyunit_mocks as mck
 
 
 class TDDReportJsonFX:
@@ -16,3 +17,12 @@ class TDDReportJsonFX:
 
     def failing_test(self, t: T):
         t.truthy(False)
+
+
+class FailTest:
+
+    def __init__(self):
+        self.reportIO = mck.Out()
+
+    def failed_test(self, t: T):
+        t.failed("test has failed")

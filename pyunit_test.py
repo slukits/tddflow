@@ -69,7 +69,7 @@ used for further tests of pyunit.
 import io
 
 from testing import T
-from pyunit_mocks import OutMock
+from pyunit_mocks import Out
 
 
 class TestTestRun():
@@ -94,7 +94,7 @@ class TestTestingTInstance():
 class TestTrueAssertion():
 
     def __init__(self):
-        self.reportIO = OutMock(self._io_callback)
+        self.reportIO = Out(self._io_callback)
         self.failedTrueAssertion = False
         self.passedTrueAssertion = False
 
