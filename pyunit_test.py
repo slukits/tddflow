@@ -70,9 +70,11 @@ import io
 
 from testing import T
 from pyunit_mocks import Out
+import pyunit_fixtures as fx
+import pyunit
 
 
-class TestTestRun():
+class TestTestRun:
 
     def __init__(self):
         super().__init__()
@@ -81,7 +83,7 @@ class TestTestRun():
     def suite_test(self, a): self.suiteTestHasRun = True
 
 
-class TestTestingTInstance():
+class TestTestingTInstance:
 
     def __init__(self):
         super().__init__()
@@ -91,7 +93,7 @@ class TestTestingTInstance():
         self.gotTestingTInstance = isinstance(t, T)
 
 
-class TestTrueAssertion():
+class TestTrueAssertion:
 
     def __init__(self):
         self.reportIO = Out(self._io_callback)
@@ -111,6 +113,17 @@ class TestTrueAssertion():
         t.truthy(True)
 
 
+class Runner:
+
+    def executes_given_single_test(self, t: T):
+        suite = fx.RunSingle()
+        pyunit.run_tests(suite, pyunit.Config(
+            out=suite.reportIO, single='single_test'))
+        t.truthy(suite.single_executed)
+        t.truthy(not suite.other_executed)
+
+
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
+    pyunit.run_tests(Runner)

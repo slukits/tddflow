@@ -29,6 +29,21 @@ class TDDReport(ReportMockSuite):
         t.log("42")
 
 
+class RunSingle(ReportMockSuite):
+    """tests single test execution"""
+
+    def __init__(self):
+        super().__init__()
+        self.single_executed = False
+        self.other_executed = False
+
+    def single_test(self, _: T):
+        self.single_executed = True
+
+    def other_executed(self, _: T):
+        self.other_executed = True
+
+
 class LoggingTest(ReportMockSuite):
     """test suit for testing a logging test"""
 

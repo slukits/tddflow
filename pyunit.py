@@ -13,11 +13,6 @@ from testing import T, FatalError
 import reporting
 
 
-class ReportType(Enum):
-    Default = 0
-    TDD = 1
-
-
 SPECIAL = {}
 """SPECIAL holds all names of test suite methods considered special."""
 
@@ -27,6 +22,7 @@ class Config:
     """configuration for test-runs"""
     reporter: reporting.Report = None
     out: TextIO = sys.stderr
+    single: str = ""
 
 
 def run_tests(suite: any, config: Config = None):
@@ -44,12 +40,7 @@ def run_tests(suite: any, config: Config = None):
         if __name__ == '__main__':
             pyunit.run(TestedSubject)
     """
-
-    s = None
-    try:
-        s = suite()
-    except TypeError:
-        s = suite
+    s = suite if not isinstance(suite, type) else suite()
     config = config or Config()
     report = config.reporter or reporting.Default()
     def counter(): return None
@@ -57,12 +48,10 @@ def run_tests(suite: any, config: Config = None):
         counter = report.increase_test_count
     except AttributeError:
         pass
-
-    tt = [t for t in dir(s)
-          if callable(getattr(s, t, None))
-          and t not in SPECIAL
-          and not t.startswith('_')
-          ]
+    if len(config.single):
+        _run_single_test(s, report, config, counter)
+        return
+    tt = _suite_tests(s)
     for t in tt:
         test = getattr(s, t)
         try:
@@ -74,3 +63,34 @@ def run_tests(suite: any, config: Config = None):
         except FatalError:
             pass
     report.print(s.__class__.__name__, config.out)
+
+
+def _run_single_test(
+    suite: any,
+    report: reporting.Report,
+    config: Config,
+    counter: callable
+):
+    tt = _suite_tests(suite)
+    for t in tt:
+        if t != config.single:
+            continue
+        test = getattr(suite, t)
+        try:
+            test(T(
+                fail=lambda: report.fail(t),
+                log=lambda msg: report.log(t, msg)
+            ))
+            counter()
+        except FatalError:
+            pass
+        break
+    report.print(suite.__class__.__name__, config.out)
+
+
+def _suite_tests(suite) -> list[str]:
+    return [t for t in dir(suite)
+            if callable(getattr(suite, t, None))
+            and t not in SPECIAL
+            and not t.startswith('_')
+            ]
