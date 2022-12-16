@@ -4,17 +4,17 @@
 # Use of this source code is governed by a MIT-style
 # license that can be found in the LICENSE file.
 
-from context import pyunit
+from context import testing
 
 
 class SuffixSuite:
 
-    def a_passing_suffix_test(self, t: pyunit.T):
+    def a_passing_suffix_test(self, t: testing.T):
         t.log("report this test")
 
-    def a_failing_suffix_test(self, t: pyunit.T):
+    def a_failing_suffix_test(self, t: testing.T):
         t.truthy(False)
 
 
 if __name__ == '__main__':
-    pyunit.run_tests(SuffixSuite)
+    testing.run(SuffixSuite)

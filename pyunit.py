@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from enum import Enum
 import sys
 
-from testing import T, FatalError
+from assert import T, FatalError
 import reporting
 
 

@@ -4,17 +4,17 @@
 # Use of this source code is governed by a MIT-style
 # license that can be found in the LICENSE file.
 
-from context import pyunit
+from context import testing
 
 
 class TestsPrefixSuite:
 
-    def a_passing_prefix_test_tests(self, t: pyunit.T):
+    def a_passing_prefix_test_tests(self, t: testing.T):
         t.log("report this test")
 
-    def a_failing_prefix_test_in_tests(self, t: pyunit.T):
+    def a_failing_prefix_test_in_tests(self, t: testing.T):
         t.truthy(False)
 
 
 if __name__ == '__main__':
-    pyunit.run_tests(TestsPrefixSuite)
+    testing.run(TestsPrefixSuite)
