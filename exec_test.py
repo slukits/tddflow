@@ -22,7 +22,7 @@ True
 
 A suite test is executed on a (suite) test run:
 
->>> from pyunit import run_tests, Config
+>>> from exec import run_tests, Config
 >>> s = TestTestRun()
 >>> s.suiteTestHasRun
 False
@@ -69,9 +69,9 @@ used for further tests of pyunit.
 import io
 
 from testing import T
-from pyunit_mocks import Out
-import pyunit_fixtures as fx
-import pyunit
+from testmocks import Out
+import testfixtures as fx
+import exec
 
 
 class TestTestRun:
@@ -117,7 +117,7 @@ class Runner:
 
     def executes_given_single_test(self, t: T):
         suite = fx.RunSingle()
-        pyunit.run_tests(suite, pyunit.Config(
+        exec.run_tests(suite, exec.Config(
             out=suite.reportIO, single='single_test'))
         t.truthy(suite.single_executed)
         t.truthy(not suite.other_executed)
@@ -126,4 +126,4 @@ class Runner:
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
-    pyunit.run_tests(Runner)
+    exec.run_tests(Runner)

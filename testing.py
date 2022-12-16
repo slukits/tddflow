@@ -31,7 +31,7 @@ class T(object):
         if log:
             self.__log(log)
 
-    def truthy(self, value: any) -> bool:
+    def truthy(self, value: any, log: str = "") -> bool:
         """
         truthy fails calling test if given value is not truthy and
         returns False; otherwise True is returned
@@ -39,6 +39,8 @@ class T(object):
         if value:
             return True
         self.failed(f'expected \'{value}\' to be truthy')
+        if len(log):
+            self.__log(log)
         return False
 
     def fatal(self, log: str = ""):
@@ -46,16 +48,16 @@ class T(object):
         fatal reports a tests as failed with given log message and stops
         it's execution immediately.
         """
-        self.failed(log)
+        if len(log):
+            self.failed(log)
         raise FatalError()
 
-    def fatal_if_not(self, b: bool):
+    def fatal_if_not(self, b: bool, log: str = ""):
         """
         fatal_if_not stops test execution if given bool b is not truthy
         """
         if b:
             return
-        # don't call fatal to not report test as failed
-        raise FatalError()
+        self.fatal(log)
 
     def log(self, s: str): self.__log(s)

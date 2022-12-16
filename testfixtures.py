@@ -6,8 +6,8 @@
 
 # pyunit fixtures contains test suites used as fixtures for test.
 
-from pyunit import T
-import pyunit_mocks as mck
+from testing import T
+import testmocks as mck
 
 
 class ReportMockSuite:

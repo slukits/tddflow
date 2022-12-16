@@ -6,23 +6,23 @@
 
 from testing import T
 
-import pyunit_fixtures as fx
-import pyunit_mocks as mck
-import pyunit
+import testfixtures as fx
+import testmocks as mck
+import exec
 
 
 class t:
 
     def fails_a_test_on_request(self, t: T):
         suite = fx.FailTest()
-        pyunit.run_tests(suite, pyunit.Config(out=suite.reportIO))
+        exec.run_tests(suite, exec.Config(out=suite.reportIO))
         t.truthy("failed_test" in suite.reportIO.getvalue())
 
     def stops_and_fails_a_test_on_request(self, t: T):
         suite = fx.FatalTest()
-        pyunit.run_tests(suite, pyunit.Config(out=suite.reportIO))
+        exec.run_tests(suite, exec.Config(out=suite.reportIO))
         t.truthy(not suite.changed_after_fatal)
 
 
 if __name__ == '__main__':
-    pyunit.run_tests(t)
+    exec.run_tests(t)
