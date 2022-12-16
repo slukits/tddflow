@@ -7,7 +7,7 @@
 # pyunit fixtures contains test suites used as fixtures for test.
 
 import testmocks as mck
-from testing import T
+from testcontext import testing
 
 
 class ReportMockSuite:
@@ -19,13 +19,13 @@ class ReportMockSuite:
 class TDDReport(ReportMockSuite):
     """test suite for TDD-cycle reporting"""
 
-    def passing_test(self, _: T):
+    def passing_test(self, _: testing.T):
         pass
 
-    def failing_test(self, t: T):
+    def failing_test(self, t: testing.T):
         t.truthy(False)
 
-    def logging_test(self, t: T):
+    def logging_test(self, t: testing.T):
         t.log("42")
 
 
@@ -37,10 +37,10 @@ class RunSingle(ReportMockSuite):
         self.single_executed = False
         self.other_executed = False
 
-    def single_test(self, _: T):
+    def single_test(self, _: testing.T):
         self.single_executed = True
 
-    def other_executed(self, _: T):
+    def other_executed(self, _: testing.T):
         self.other_executed = True
 
 
@@ -51,13 +51,13 @@ class LoggingTest(ReportMockSuite):
         super().__init__()
         self.msg = msg
 
-    def logging_test(self, t: T): t.log(self.msg)
+    def logging_test(self, t: testing.T): t.log(self.msg)
 
 
 class FailTest(ReportMockSuite):
     """test suit for testing failing a test"""
 
-    def failed_test(self, t: T):
+    def failed_test(self, t: testing.T):
         t.failed("test has failed")
 
 
@@ -68,10 +68,10 @@ class FatalTest(ReportMockSuite):
         super().__init__()
         self.changed_after_fatal = False
 
-    def fatal_test(self, t: T):
+    def fatal_test(self, t: testing.T):
         t.fatal("test run is stopped and has failed")
         self.changed_after_fatal = True
 
-    def fatal_if_not_test(self, t: T):
+    def fatal_if_not_test(self, t: testing.T):
         t.fatal_if_not(False)
         self.changed_after_fatal = True

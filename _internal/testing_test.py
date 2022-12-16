@@ -22,11 +22,11 @@ True
 
 A suite test is executed on a (suite) test run:
 
->>> from testing import run, Config
+>>> from testcontext import testing
 >>> s = TestTestRun()
 >>> s.suiteTestHasRun
 False
->>> run(s)
+>>> testing.run(s)
 >>> s.suiteTestHasRun
 True
 
@@ -35,7 +35,7 @@ A suite test has an Testing instance provided on execution:
 >>> s = TestTestingTInstance()
 >>> s.gotTestingTInstance
 False
->>> run(s)
+>>> testing.run(s)
 >>> s.gotTestingTInstance
 True
 
@@ -46,7 +46,7 @@ A suite test fails if truthy assertion fails:
 False
 >>> s.passedTrueAssertion
 False
->>> run(s, Config(out=s.reportIO))
+>>> testing.run(s, testing.Config(out=s.reportIO))
 >>> s.failedTrueAssertion
 True
 >>> s.passedTrueAssertion
@@ -68,7 +68,7 @@ used for further tests of pyunit.
 
 from testmocks import Out
 import testfixtures as fx
-from testing import run, T, Config
+from testcontext import testing
 
 
 class TestTestRun:
@@ -86,8 +86,8 @@ class TestTestingTInstance:
         super().__init__()
         self.gotTestingTInstance = False
 
-    def got_testing_T_instance(self, t: T):
-        self.gotTestingTInstance = isinstance(t, T)
+    def got_testing_T_instance(self, t: testing.T):
+        self.gotTestingTInstance = isinstance(t, testing.T)
 
 
 class TestTrueAssertion:
@@ -103,18 +103,18 @@ class TestTrueAssertion:
         if 'passes_if_true' in s:
             self.passedTrueAssertion = True
 
-    def fails_if_false(self, t: T):
+    def fails_if_false(self, t: testing.T):
         t.truthy(False)
 
-    def passes_if_true(self, t: T):
+    def passes_if_true(self, t: testing.T):
         t.truthy(True)
 
 
 class Runner:
 
-    def executes_given_single_test(self, t: T):
+    def executes_given_single_test(self, t: testing.T):
         suite = fx.RunSingle()
-        run(suite, Config(
+        testing.run(suite, testing.Config(
             out=suite.reportIO, single='single_test'))
         t.truthy(suite.single_executed)
         t.truthy(not suite.other_executed)
@@ -123,4 +123,4 @@ class Runner:
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
-    run(Runner)
+    testing.run(Runner)

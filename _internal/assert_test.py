@@ -5,21 +5,21 @@
 # license that can be found in the LICENSE file.
 
 import testfixtures as fx
-from testing import run, T, Config
+from testcontext import testing
 
 
 class t:
 
-    def fails_a_test_on_request(self, t: T):
+    def fails_a_test_on_request(self, t: testing.T):
         suite = fx.FailTest()
-        run(suite, Config(out=suite.reportIO))
+        testing.run(suite, testing.Config(out=suite.reportIO))
         t.truthy("failed_test" in suite.reportIO.getvalue())
 
-    def stops_and_fails_a_test_on_request(self, t: T):
+    def stops_and_fails_a_test_on_request(self, t: testing.T):
         suite = fx.FatalTest()
-        run(suite, Config(out=suite.reportIO))
+        testing.run(suite, testing.Config(out=suite.reportIO))
         t.truthy(not suite.changed_after_fatal)
 
 
 if __name__ == '__main__':
-    run(t)
+    testing.run(t)

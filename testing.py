@@ -4,23 +4,23 @@
 # Use of this source code is governed by a MIT-style
 # license that can be found in the LICENSE file.
 
-from typing import TextIO
-from dataclasses import dataclass
-import sys
+from typing import TextIO as _TextIO
+from dataclasses import dataclass as _dataclass
+import sys as _sys
 
-from assert_ import T, FatalError
-import reporting
+from ._internal.assert_ import T, FatalError as _FatalError
+from ._internal import reporting
 
 
-SPECIAL = {}
+_SPECIAL = {}
 """SPECIAL holds all names of test suite methods considered special."""
 
 
-@dataclass
+@_dataclass
 class Config:
     """configuration for test-runs"""
     reporter: reporting.Report = None
-    out: TextIO = sys.stderr
+    out: _TextIO = _sys.stderr
     single: str = ""
 
 
@@ -59,7 +59,7 @@ def run(suite: any, config: Config = None):
                 log=lambda msg: report.log(t, msg)
             ))
             counter()
-        except FatalError:
+        except _FatalError:
             pass
     report.print(s.__class__.__name__, config.out)
 
@@ -81,7 +81,7 @@ def _run_single_test(
                 log=lambda msg: report.log(t, msg)
             ))
             counter()
-        except FatalError:
+        except _FatalError:
             pass
         break
     report.print(suite.__class__.__name__, config.out)
@@ -90,6 +90,6 @@ def _run_single_test(
 def _suite_tests(suite) -> list[str]:
     return [t for t in dir(suite)
             if callable(getattr(suite, t, None))
-            and t not in SPECIAL
+            and t not in _SPECIAL
             and not t.startswith('_')
             ]
