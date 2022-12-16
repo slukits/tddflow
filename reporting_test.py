@@ -15,6 +15,15 @@ from reporting import (TDD, JSN_TESTS_COUNT, JSN_FAILS_COUNT, JSN_FAILS,
 from testing import T
 
 
+class DefaultReport:
+
+    def reports_a_test_s_log_message(self, t: T):
+        exp = "42"
+        suite = fx.LoggingTest(exp)
+        pyunit.run_tests(suite, pyunit.Config(out=suite.reportIO))
+        t.truthy(exp in suite.reportIO.getvalue())
+
+
 class TDDReport:
 
     def _config(self, reportIO: TextIO) -> pyunit.Config:
@@ -34,7 +43,7 @@ class TDDReport:
         pyunit.run_tests(suite, self._config(suite.reportIO))
         report = json.loads(suite.reportIO.getvalue())
         t.fatal_if_not(t.truthy(JSN_TESTS_COUNT in report))
-        t.truthy(2 == report[JSN_TESTS_COUNT])
+        t.truthy(3 == report[JSN_TESTS_COUNT])
 
     def provides_the_number_of_failed_tests(self, t: T):
         suite = fx.TDDReport()
@@ -58,6 +67,14 @@ class TDDReport:
         t.truthy(report[JSN_TEST_LOGS]['failing_test']
                  == ["expected 'False' to be truthy"])
 
+    def provides_a_logging_test_s_log_message(self, t: T):
+        suite = fx.TDDReport()
+        pyunit.run_tests(suite, self._config(suite.reportIO))
+        report = json.loads(suite.reportIO.getvalue())
+        t.fatal_if_not(t.truthy(JSN_TEST_LOGS in report))
+        t.truthy(report[JSN_TEST_LOGS]['logging_test'] == ["42"])
+
 
 if __name__ == '__main__':
+    pyunit.run_tests(DefaultReport)
     pyunit.run_tests(TDDReport)

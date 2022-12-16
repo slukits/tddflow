@@ -25,6 +25,19 @@ class TDDReport(ReportMockSuite):
     def failing_test(self, t: T):
         t.truthy(False)
 
+    def logging_test(self, t: T):
+        t.log("42")
+
+
+class LoggingTest(ReportMockSuite):
+    """test suit for testing a logging test"""
+
+    def __init__(self, msg: str):
+        super().__init__()
+        self.msg = msg
+
+    def logging_test(self, t: T): t.log(self.msg)
+
 
 class FailTest(ReportMockSuite):
     """test suit for testing failing a test"""

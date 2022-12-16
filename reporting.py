@@ -62,7 +62,7 @@ class Default(Report):
     def print(self, suite: str, out: TextIO):
         if len(self._tt) == 0:
             return
-        print("pyunit: failed suite-tests:", file=out)
+        print("pyunit: failing/logging suite-tests:", file=out)
         print("{} ({}/{})".format(
             suite, len(self._tt), self.fails_count), file=out)
         for name, attrs in self._tt.items():

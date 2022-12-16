@@ -18,7 +18,7 @@ class T(object):
     t.truthy).
     """
 
-    def __init__(self, fail: callable, log: Callable[[str, str], None]):
+    def __init__(self, fail: callable, log: Callable[[str], None]):
         self.__fail = fail
         self.__log = log
 
@@ -57,3 +57,5 @@ class T(object):
             return
         # don't call fatal to not report test as failed
         raise FatalError()
+
+    def log(self, s: str): self.__log(s)
