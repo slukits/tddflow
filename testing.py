@@ -8,8 +8,8 @@ from typing import TextIO as _TextIO
 from dataclasses import dataclass as _dataclass
 import sys as _sys
 
-from ._internal.assert_ import T, FatalError as _FatalError
-from ._internal import reporting
+from pyunit._internal.assert_ import T, FatalError as _FatalError
+from pyunit._internal import reporting
 
 
 _SPECIAL = {}
