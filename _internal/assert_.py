@@ -4,7 +4,7 @@
 # Use of this source code is governed by a MIT-style
 # license that can be found in the LICENSE file.
 
-from typing import Callable
+from typing import Callable, Any, Type, Optional
 
 
 class FatalError(Exception):
@@ -18,7 +18,7 @@ class T(object):
     t.truthy).
     """
 
-    def __init__(self, fail: callable, log: Callable[[str], None]):
+    def __init__(self, fail: Callable, log: Callable[[str], None]):
         self.__fail = fail
         self.__log = log
 
@@ -31,7 +31,7 @@ class T(object):
         if log:
             self.__log(log)
 
-    def truthy(self, value: any, log: str = "") -> bool:
+    def truthy(self, value: Any, log: str = "") -> bool:
         """
         truthy fails calling test if given value is not truthy and
         returns False; otherwise True is returned
@@ -59,5 +59,21 @@ class T(object):
         if b:
             return
         self.fatal(log)
+
+    def raises(
+        self, c: Callable, ErrType: Type,
+        msg: Optional[str] = None
+    ) -> bool:
+        try:
+            c()
+        except Exception as e:
+            if type(e) is ErrType:
+                return True
+            self.failed(f"callable raised {type(e)} instead of {ErrType}")
+        else:
+            self.failed(f"callable didn't raise {ErrType}")
+        if msg:
+            self.__log(msg)
+        return False
 
     def log(self, s: str): self.__log(s)
