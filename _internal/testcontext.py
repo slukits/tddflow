@@ -10,7 +10,8 @@ import sys
 pyunit_root = os.path.abspath(
     os.path.join(os.path.dirname(__file__), '../..'))
 
-sys.path.insert(0, pyunit_root)
+if pyunit_root not in sys.path:
+    sys.path.insert(0, pyunit_root)
 
 from pyunit import testing
 _ = testing
