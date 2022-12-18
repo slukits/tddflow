@@ -4,12 +4,7 @@
 # Use of this source code is governed by a MIT-style
 # license that can be found in the LICENSE file.
 
-import os
-import sys
+# pm1.py emulates a production module
 
-pyunit_path = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '../../../pyunit'))
-
-sys.path.insert(0, pyunit_path)
-
-import testing
+def pm1f() -> bool:
+    return False

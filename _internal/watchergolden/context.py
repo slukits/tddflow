@@ -7,13 +7,10 @@
 import os
 import sys
 
-# root_path = os.path.abspath(
-#     os.path.join(os.path.dirname(__file__), '../..'))
-
 pyunit_path = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '../../pyunit'))
+    os.path.join(os.path.dirname(__file__), '../../..'))
 
-# sys.path.insert(0, root_path)
-sys.path.insert(0, pyunit_path)
+if pyunit_path not in sys.path:
+    sys.path.insert(0, pyunit_path)
 
-import testing
+from pyunit import testing
