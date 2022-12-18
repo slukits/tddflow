@@ -4,7 +4,7 @@
 # Use of this source code is governed by a MIT-style
 # license that can be found in the LICENSE file.
 
-from typing import TextIO as _TextIO
+from typing import TextIO as _TextIO, Any, Callable
 from dataclasses import dataclass as _dataclass
 import sys as _sys
 
@@ -12,19 +12,19 @@ from pyunit._internal.assert_ import T, FatalError as _FatalError
 from pyunit._internal import reporting
 
 
-_SPECIAL = {}
+_SPECIAL = set()  # type: set
 """SPECIAL holds all names of test suite methods considered special."""
 
 
 @_dataclass
 class Config:
     """configuration for test-runs"""
-    reporter: reporting.Report = None
+    reporter: reporting.Report | None = None
     out: _TextIO = _sys.stderr
     single: str = ""
 
 
-def run(suite: any, config: Config = None):
+def run(suite: Any, config: Config | None = None):
     """
     run executes *every* callable c (i.e also static or class methods) of
     given suite iff c is non-special and non-dunder.  Each call gets a T
@@ -44,7 +44,7 @@ def run(suite: any, config: Config = None):
     report = config.reporter or reporting.Default()
     def counter(): return None
     try:
-        counter = report.increase_test_count
+        counter = report.increase_test_count  # type: ignore
     except AttributeError:
         pass
     if len(config.single):
@@ -65,10 +65,10 @@ def run(suite: any, config: Config = None):
 
 
 def _run_single_test(
-    suite: any,
+    suite: Any,
     report: reporting.Report,
     config: Config,
-    counter: callable
+    counter: Callable
 ):
     tt = _suite_tests(suite)
     for t in tt:

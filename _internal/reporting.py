@@ -3,8 +3,16 @@
 # Copyright (c) 2022 Stephan Lukits. All rights reserved.
 # Use of this source code is governed by a MIT-style
 # license that can be found in the LICENSE file.
+
+"""
+module reporting provides the two report type Default and TDD which are
+used by pyunit to report about executed test runs.  It also provides the
+abstract type Report which may be used to implement an other report.
+Use testing.Config to define which report should be used.
+"""
+
 from dataclasses import dataclass, field
-from typing import Dict, TextIO, Tuple
+from typing import Dict, TextIO
 
 JSN_TEST_SUITE = "test_suite"
 JSN_TESTS_COUNT = "tests_count"
@@ -28,12 +36,12 @@ class Report:
     during the test-run.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         initializes the *tests* and *fails_count* properties for a
         suite's test run.
         """
-        self.tests = dict()  # type: Dict[str:TestAttributes]
+        self.tests = dict()  # type: Dict[str,TestAttributes]
         """test stores failed or logging tests"""
         self.fails_count = 0  # type: int
         """
@@ -85,7 +93,7 @@ class Default(Report):
 
 class TDD(Report):
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.test_count: int = 0
 
