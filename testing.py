@@ -10,6 +10,7 @@ import sys as _sys
 
 from pyunit._internal.assert_ import T, FatalError as _FatalError
 from pyunit._internal import reporting
+from pyunit._internal.watcher import REPORT_ARG as _REPORT_JSON
 
 
 _SPECIAL = set()  # type: set
@@ -20,7 +21,7 @@ _SPECIAL = set()  # type: set
 class Config:
     """configuration for test-runs"""
     reporter: reporting.Report | None = None
-    out: _TextIO = _sys.stderr
+    out: _TextIO = _sys.stdout
     single: str = ""
 
 
@@ -41,7 +42,10 @@ def run(suite: Any, config: Config | None = None):
     """
     s = suite if not isinstance(suite, type) else suite()
     config = config or Config()
-    report = config.reporter or reporting.Default()
+    
+
+    report = (reporting.TDD() if _REPORT_JSON in _sys.argv else
+        config.reporter or reporting.Default())
     def counter(): return None
     try:
         counter = report.increase_test_count  # type: ignore
