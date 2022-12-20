@@ -12,6 +12,7 @@ from pathlib import Path
 
 from testcontext import testing
 import watcher
+import tui
 from assert_ import T
 
 golden = Path(os.path.abspath(
@@ -152,16 +153,24 @@ class AWatcher:
         
     def reports_the_number_of_run_and_failed_tests(self, t: T):
         out = io.StringIO()
-        w = watcher.Dir(str(golden))
-        w.run_test_modules(out=out)
+        w, ss, ee = watcher.Dir(str(golden)), [], dict()
+        for tm in w.test_modules_to_run():
+            _ss, _ee = w.run_test_module(tm)
+            if len(_ss):
+                ss.extend(_ss)
+            if len(_ee):
+                ee.update(_ee)
+        w.print(ss, ee, tui.TUI(out))
         t.truthy('8' in out.getvalue())
         t.truthy('4' in out.getvalue())
-
-    def test_reporting(self, t: T):
-        out = io.StringIO()
-        w = watcher.Dir(str(golden))
-        w.run_test_modules(out=out)
         t.log(out.getvalue())
+
+
+    # def test_reporting(self, t: T):
+    #     out = io.StringIO()
+    #     w = watcher.Dir(str(golden))
+    #     w.run_test_modules(out=out)
+    #     t.log(out.getvalue())
 
 
 if __name__ == '__main__':

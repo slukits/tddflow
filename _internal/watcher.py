@@ -5,20 +5,29 @@
 # license that can be found in the LICENSE file.
 
 
+from typing import Generator, Tuple, FrozenSet, TextIO
 import ast
 import os
 import sys
 import json
-from typing import Generator, Tuple, FrozenSet, TextIO
+import time
 from pathlib import Path
-import sys
 from multiprocessing.pool import Pool
 import subprocess
+from queue import Queue, Empty
 
-from pyunit._internal.reporting import (JSN_TESTS_COUNT, 
-    JSN_FAILS_COUNT, JSN_TEST_SUITE, JSN_FAILS, JSN_TEST_LOGS)
+pyunit_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
+if pyunit_path not in sys.path:
+    sys.path.insert(0, pyunit_path)
+
+from pyunit._internal.reporting import (
+    JSN_TESTS_COUNT, JSN_FAILS_COUNT, JSN_TEST_SUITE, JSN_FAILS,
+    JSN_TEST_LOGS)
+
+from pyunit._internal.tui import TUI
 
 REPORT_ARG = '--report=json'
+
 
 class DirNoPackage(Exception):
     pass
@@ -109,7 +118,7 @@ class Dir:
         return (p.name.startswith("test_")
                 or p.name.endswith("_test.py"))
 
-    def production_modules(self) -> Generator[Path | None, None, None]:
+    def production_modules(self) -> Generator[Path, None, None]:
         for p in self.sub_packages():
             for path in p.dir.iterdir():
                 if not self.is_production(path):
@@ -121,74 +130,9 @@ class Dir:
                     continue
                 yield path
 
-    def is_production(self, p: Path)  -> bool:
+    def is_production(self, p: Path) -> bool:
         return (not p.is_dir() and p.name.endswith(".py")
-            and not self.is_test_module(p))
-
-    def run_test_modules(
-        self, pool: Pool|None=None, out: TextIO=sys.stdout
-    ) -> None:
-        if pool:
-            return self._run_update_in_pool(pool, out)
-        ss = []  # type: list[str]
-        ee = dict()
-        for tm in self.test_modules_to_run():
-            result = subprocess.run([
-                "python", str(tm.path), REPORT_ARG],
-                capture_output=True,
-                text=True,
-                cwd=str(tm.path.parent),
-                timeout=self.timeout
-            )
-            if result.stderr:
-                rel_tm = str(tm).removeprefix(str(self.root_package))
-                ee[rel_tm] ='    '+'\n    '.join(result.stderr.split('\n'))
-                continue
-            if not result.stdout:
-                continue
-            for i, s in enumerate(result.stdout.split('\n{')):
-                if not i:
-                    ss.append(s)
-                    continue
-                ss.append('{'+s)
-        self.print(ss, ee, out)
-
-    def print(self, ss: list[str], ee: dict[str, str], out: TextIO):
-        tests_count, fails_count, parsed = 0, 0, []
-        for jsn in [json.loads(s) for s in ss]:
-            tests_count += jsn[JSN_TESTS_COUNT]
-            fails_count += jsn[JSN_FAILS_COUNT]
-            parsed.append(jsn)
-        summary = (f'pyunit: watcher: run {tests_count} tests of '+
-            f'witch {fails_count} failed')
-        if fails_count:
-            out.write(self.failed(summary) + '\n')
-        else:
-            out.write(self.passed(summary) + '\n')
-        for m, err in ee.items():
-            out.write('\n    '+self.failed(f'run failed: .{m}')+'\n  ')
-            out.write(err)
-        for jsn in parsed:
-            out.write(f'\n    {jsn[JSN_TEST_SUITE]}\n')
-            fails = jsn[JSN_FAILS]
-            for t, ll in jsn[JSN_TEST_LOGS].items():
-                if t in fails:
-                    out.write('      '+self.failed(f'{t}')+'\n')
-                else:
-                    out.write(f'      {t}\n')
-                for l in ll:
-                    out.write(f'        {l}\n')
-
-    def failed(self, s: str) -> str:
-        return f'{RED_BG}{WHITE_FG}{s}{RESET_COLORS}'
-
-    def passed(self, s: str) -> str:
-        return f'{GREEN_BG}{BLACK_FG}{s}{RESET_COLORS}'
-
-    def _run_update_parallel(
-        self, pool: Pool, log: TextIO|None=None
-    ) -> None:
-        pass
+                and not self.is_test_module(p))
 
     def test_modules_to_run(self) -> set['TM']:
         """
@@ -205,13 +149,58 @@ class Dir:
         self._last_snapshot = now
         return tt
 
+    def run_test_module(self, tm: 'TM') -> Tuple[list[str], dict[str, str]]:
+        ss = []  # type: list[str]
+        ee = dict()
+        result = subprocess.run([
+            "python", str(tm.path), REPORT_ARG],
+            capture_output=True,
+            text=True,
+            cwd=str(tm.path.parent),
+            timeout=self.timeout
+        )
+        if result.stderr:
+            rel_tm = str(tm).removeprefix(str(self.root_package))
+            ee[rel_tm] = '    ' + '\n    '.join(
+                result.stderr.strip().split('\n'))
+            return ss, ee
+        if not result.stdout:
+            return ss, ee
+        for i, s in enumerate(result.stdout.split('\n{')):
+            if not i:
+                ss.append(s)
+                continue
+            ss.append('{' + s)
+        return ss, ee
 
-BLACK_FG = "\033[30m"
-RED_BG = "\033[41m"
-GREEN_BG = "\033[42m"
-WHITE_FG = "\033[37m"
-RESET = "\033[0m"
-RESET_COLORS = "\033[39;49m"
+    def print(self, ss: list[str], ee: dict[str, str], out: TUI):
+        out.clear()
+        tests_count, fails_count, parsed = 0, 0, []
+        for jsn in [json.loads(s) for s in ss]:
+            tests_count += jsn[JSN_TESTS_COUNT]
+            fails_count += jsn[JSN_FAILS_COUNT]
+            parsed.append(jsn)
+        summary = (f'pyunit: watcher: run {tests_count} tests of ' +
+                   f'witch {fails_count} failed')
+        if fails_count:
+            out.write_line(out.failed(summary))
+        else:
+            out.write_line(out.passed(summary))
+        for m, err in ee.items():
+            out.write_line()
+            out.write_line(out.failed(f'run failed: .{m}'), 4)
+            out.write_line(err, 4)
+        for jsn in parsed:
+            out.write_line()
+            out.write_line(f'{jsn[JSN_TEST_SUITE]}', 4)
+            fails = jsn[JSN_FAILS]
+            for t, ll in jsn[JSN_TEST_LOGS].items():
+                if t in fails:
+                    out.write_line(out.failed(f'{t}'), 6)
+                else:
+                    out.write_line(f'{t}', 6)
+                for l in ll:
+                    out.write_line(f'{l}', 8)
 
 
 class Pkg:
@@ -246,14 +235,14 @@ class Snapshot:
         """
         tt = set()
         for p in other.pp:
-            if (p.as_posix() not in self.mt 
+            if (p.as_posix() not in self.mt
                     or p.stat().st_mtime_ns > self.mt[p.as_posix()]):
                 for tm in other.production_to_test(p):
                     tt.add(tm)
         for tm in other.tt:
-            if (tm.path.as_posix() not in self.mt 
-                    or tm.path.stat().st_mtime_ns 
-                        > self.mt[tm.path.as_posix()]):
+            if (tm.path.as_posix() not in self.mt
+                    or tm.path.stat().st_mtime_ns
+                    > self.mt[tm.path.as_posix()]):
                 tt.add(tm)
         return tt
 
@@ -265,7 +254,7 @@ class Snapshot:
         try:
             return self._pp_to_tt[prd.as_posix()]
         except AttributeError:
-            self._pp_to_tt = dict() # type: dict[str, list[TM]]
+            self._pp_to_tt = dict()  # type: dict[str, list[TM]]
             for tm in self.tt:
                 for p in tm.production_dependencies():
                     if p.as_posix() not in self._pp_to_tt:
@@ -393,3 +382,33 @@ class TM:
             return abs_path
         return None
 
+
+def run_watcher(dir: Dir, should_quite: Queue):
+    while True:
+        try:
+            should_quite.get(False)
+        except Empty:
+            pass
+        else:
+            break
+        time.sleep(0.3)
+    print("gracefully stopped")
+
+
+def quitClosure(q: Queue) -> callable:
+    return lambda sig, frame: q.put(True)
+
+
+if __name__ == '__main__':
+    import signal
+
+    try:
+        dir = Dir(os.getcwd())
+    except DirNoPackage:
+        print('can only watch packages (dir with __init__.py file)' +
+            f'\n  {os.getcwd()}\nis no package.')
+        sys.exit(1)
+    else:
+        quitQueue = Queue()
+        signal.signal(signal.SIGINT, quitClosure(quitQueue))
+        run_watcher(dir, quitQueue)
