@@ -5,7 +5,7 @@
 # license that can be found in the LICENSE file.
 
 
-from typing import Generator, Tuple, FrozenSet, TextIO
+from typing import Generator, Tuple, FrozenSet, Callable, Iterable
 import ast
 import os
 import sys
@@ -40,7 +40,10 @@ class Dir:
     for changes and executing test-runs appropriately.
     """
 
-    def __init__(self, dir: str) -> None:
+    def __init__(
+        self, dir: str, 
+        dep_gen: Callable[[Iterable['TM']], Tuple['TM', list[Path]]] = None
+    ) -> None:
         """
         init initializes a watched directory and fails if directory is
         not a package.  In case the watched package's root package is
@@ -56,7 +59,8 @@ class Dir:
         root = self.root_package
         if str(root.parent) not in sys.path:
             sys.path.insert(0, str(root.parent))
-        self._last_snapshot = Snapshot(frozenset(), frozenset())
+        self._dep_gen = dep_gen or TM.dependencies
+        self._last_snapshot = Snapshot(frozenset(), frozenset(), self._dep_gen)
         self.timeout = 2.0  # type: float
 
     def is_package(self, dir: Path) -> bool:
@@ -143,7 +147,8 @@ class Dir:
         """
         now = Snapshot(
             frozenset(tm for tm in self.test_modules()),
-            frozenset(pm for pm in self.production_modules())
+            frozenset(pm for pm in self.production_modules()),
+            self._dep_gen
         )
         tt = self._last_snapshot.updated(now)
         self._last_snapshot = now
@@ -217,9 +222,15 @@ class Pkg:
 
 class Snapshot:
 
-    def __init__(self, tt: FrozenSet['TM'], pp: FrozenSet[Path]) -> None:
+    def __init__(
+        self, 
+        tt: FrozenSet['TM'], 
+        pp: FrozenSet[Path], 
+        dep_gen: Callable[[Iterable['TM']], Tuple['TM', list[Path]]]
+    ) -> None:
         self.tt = tt
         self.pp = pp
+        self.dep_gen = dep_gen
         self.mt = dict()  # type: dict[str, float]
         for t in tt:
             self.mt[t.path.as_posix()] = t.path.stat().st_mtime_ns
@@ -255,11 +266,11 @@ class Snapshot:
             return self._pp_to_tt[prd.as_posix()]
         except AttributeError:
             self._pp_to_tt = dict()  # type: dict[str, list[TM]]
-            for tm in self.tt:
-                for p in tm.production_dependencies():
-                    if p.as_posix() not in self._pp_to_tt:
-                        self._pp_to_tt[p.as_posix()] = []
-                    self._pp_to_tt[p.as_posix()].append(tm)
+            for tm, dd in self.dep_gen(self.tt):
+                for d in dd:
+                    if d.as_posix() not in self._pp_to_tt:
+                        self._pp_to_tt[d.as_posix()] = []
+                    self._pp_to_tt[d.as_posix()].append(tm)
         except KeyError:
             return []
         if prd.as_posix() not in self._pp_to_tt:
@@ -381,6 +392,12 @@ class TM:
         if abs_path.exists():
             return abs_path
         return None
+
+    @staticmethod
+    def dependencies(tt: Iterable['TM']) -> Generator[
+            Tuple['TM', list[Path]], None, None]:
+        for t in tt:
+            yield t, t.production_dependencies()
 
 
 def run_watcher(dir: Dir, should_quite: Queue):

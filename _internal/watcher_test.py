@@ -163,7 +163,6 @@ class AWatcher:
         w.print(ss, ee, tui.TUI(out))
         t.truthy('8' in out.getvalue())
         t.truthy('4' in out.getvalue())
-        t.log(out.getvalue())
 
 
     # def test_reporting(self, t: T):
