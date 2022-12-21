@@ -147,7 +147,7 @@ class Dir:
         test_modules_to_run returns the test-modules which have been
         updated or import an updated production module since its last
         call.  Hence test_modules_to_run must be called only once per
-        run-request. 
+        run-request.
         """
         now = Snapshot(
             frozenset(tm for tm in self.test_modules()),
@@ -435,7 +435,7 @@ def run_tests(
         if len(r[0]):
             ss.extend(r[0])
         if len(r[1]):
-            ee.update(ee)
+            ee.update(r[1])
     return ss, ee
 
 
