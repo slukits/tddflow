@@ -5,7 +5,7 @@
 # license that can be found in the LICENSE file.
 
 
-from typing import Generator, Tuple, FrozenSet, Callable, Iterable
+from typing import Generator, Tuple, FrozenSet, Callable, Iterable, Any, Iterator
 import ast
 import os
 import sys
@@ -13,6 +13,7 @@ import json
 import time
 from pathlib import Path
 from multiprocessing.pool import Pool
+import multiprocessing
 import subprocess
 from queue import Queue, Empty
 
@@ -41,8 +42,9 @@ class Dir:
     """
 
     def __init__(
-        self, dir: str, 
-        dep_gen: Callable[[Iterable['TM']], Tuple['TM', list[Path]]] = None
+        self, dir: str,
+        dep_gen: Callable[
+            [Iterable['TM']], list[Tuple['TM', list[Path]]]] | None = None
     ) -> None:
         """
         init initializes a watched directory and fails if directory is
@@ -61,7 +63,7 @@ class Dir:
             sys.path.insert(0, str(root.parent))
         self._dep_gen = dep_gen or TM.dependencies
         self._last_snapshot = Snapshot(frozenset(), frozenset(), self._dep_gen)
-        self.timeout = 2.0  # type: float
+        self.timeout = 10.0  # type: float
 
     def is_package(self, dir: Path) -> bool:
         """
@@ -97,7 +99,8 @@ class Dir:
         while len(dd):
             dir = dd.pop()
             for d in dir.iterdir():
-                if not d.is_dir() or d.name in self._ignore_packages:
+                if (not d.is_dir() or d.name in self._ignore_packages
+                        or not self.is_package(d)):
                     continue
                 dd.append(d)
             yield Pkg(dir)
@@ -136,9 +139,10 @@ class Dir:
 
     def is_production(self, p: Path) -> bool:
         return (not p.is_dir() and p.name.endswith(".py")
+                and not p.name in self._ignore_modules
                 and not self.is_test_module(p))
 
-    def test_modules_to_run(self) -> set['TM']:
+    def test_modules_to_run(self) -> 'Analysis':
         """
         test_modules_to_run returns the test-modules which have been
         updated or import an updated production module since its last
@@ -154,16 +158,21 @@ class Dir:
         self._last_snapshot = now
         return tt
 
-    def run_test_module(self, tm: 'TM') -> Tuple[list[str], dict[str, str]]:
+    def run_test_module(self, tm: Path) -> Tuple[list[str], dict[str, str]]:
         ss = []  # type: list[str]
         ee = dict()
-        result = subprocess.run([
-            "python", str(tm.path), REPORT_ARG],
-            capture_output=True,
-            text=True,
-            cwd=str(tm.path.parent),
-            timeout=self.timeout
-        )
+        try:
+            result = subprocess.run([
+                "python", str(tm), REPORT_ARG],
+                capture_output=True,
+                text=True,
+                cwd=str(tm.parent),
+                timeout=self.timeout
+            )
+        except subprocess.TimeoutExpired:
+            rel_tm = str(tm).removeprefix(str(self.root_package))
+            ee[rel_tm] = '    ' + 'test run\'s timeout expired'
+            return ss, ee
         if result.stderr:
             rel_tm = str(tm).removeprefix(str(self.root_package))
             ee[rel_tm] = '    ' + '\n    '.join(
@@ -177,35 +186,6 @@ class Dir:
                 continue
             ss.append('{' + s)
         return ss, ee
-
-    def print(self, ss: list[str], ee: dict[str, str], out: TUI):
-        out.clear()
-        tests_count, fails_count, parsed = 0, 0, []
-        for jsn in [json.loads(s) for s in ss]:
-            tests_count += jsn[JSN_TESTS_COUNT]
-            fails_count += jsn[JSN_FAILS_COUNT]
-            parsed.append(jsn)
-        summary = (f'pyunit: watcher: run {tests_count} tests of ' +
-                   f'witch {fails_count} failed')
-        if fails_count:
-            out.write_line(out.failed(summary))
-        else:
-            out.write_line(out.passed(summary))
-        for m, err in ee.items():
-            out.write_line()
-            out.write_line(out.failed(f'run failed: .{m}'), 4)
-            out.write_line(err, 4)
-        for jsn in parsed:
-            out.write_line()
-            out.write_line(f'{jsn[JSN_TEST_SUITE]}', 4)
-            fails = jsn[JSN_FAILS]
-            for t, ll in jsn[JSN_TEST_LOGS].items():
-                if t in fails:
-                    out.write_line(out.failed(f'{t}'), 6)
-                else:
-                    out.write_line(f'{t}', 6)
-                for l in ll:
-                    out.write_line(f'{l}', 8)
 
 
 class Pkg:
@@ -223,10 +203,10 @@ class Pkg:
 class Snapshot:
 
     def __init__(
-        self, 
-        tt: FrozenSet['TM'], 
-        pp: FrozenSet[Path], 
-        dep_gen: Callable[[Iterable['TM']], Tuple['TM', list[Path]]]
+        self,
+        tt: FrozenSet['TM'],
+        pp: FrozenSet[Path],
+        dep_gen: Callable[[Iterable['TM']], list[Tuple['TM', list[Path]]]]
     ) -> None:
         self.tt = tt
         self.pp = pp
@@ -237,25 +217,26 @@ class Snapshot:
         for p in pp:
             self.mt[p.as_posix()] = p.stat().st_mtime_ns
 
-    def updated(self, other: 'Snapshot') -> set['TM']:
+    def updated(self, other: 'Snapshot') -> 'Analysis':
         """
         updated returns the set of test modules which are
             - not in this snapshot's test modules
             - which have been modified in other snapshot
             - which import a modified production module of other snapshot
         """
-        tt = set()
+        analysis = Analysis()
         for p in other.pp:
             if (p.as_posix() not in self.mt
                     or p.stat().st_mtime_ns > self.mt[p.as_posix()]):
+                analysis.mod_pp[str(p)] = set()
                 for tm in other.production_to_test(p):
-                    tt.add(tm)
+                    analysis.mod_pp[str(p)].add(tm)
         for tm in other.tt:
             if (tm.path.as_posix() not in self.mt
                     or tm.path.stat().st_mtime_ns
                     > self.mt[tm.path.as_posix()]):
-                tt.add(tm)
-        return tt
+                analysis.mod_tt.add(tm)
+        return analysis
 
     def production_to_test(self, prd: Path):
         """
@@ -278,10 +259,43 @@ class Snapshot:
         return self._pp_to_tt[prd.as_posix()]
 
 
+class Analysis:
+    """
+    An Analysis of the modifications in a watched directory is returned
+    by the updated-method of a snapshot which compares two snapshots for
+    modifications and determines from that which test modules should be
+    run.
+    """
+
+    def __init__(self) -> None:
+        self.mod_tt = set()  # type: set[TM]
+        self.mod_pp = dict()  # type: dict[str, set[TM]]
+
+    def __iter__(self) -> Iterator[Path]:
+        return (tm for tm in self.tt)
+
+    def __len__(self) -> int:
+        return len(self.tt)
+
+    def pop(self) -> Path:
+        return self.tt.pop()
+
+    @property
+    def tt(self) -> set[Path]:
+        try:
+            return self._tt
+        except AttributeError:
+            self._tt = set()  # type: set[Path]
+            self._tt = self._tt.union(t.path for t in self.mod_tt)
+            for ptm in self.mod_pp.values():
+                self._tt = self._tt.union(t.path for t in ptm)
+        return self._tt
+
+
 class TM:
     """
     TM wraps a Path representing a test module of the watched package or
-    on one of its sub-packages.
+    of one of its sub-packages.
     """
 
     def __init__(self, watched: 'Dir', p: Path) -> None:
@@ -394,26 +408,104 @@ class TM:
         return None
 
     @staticmethod
-    def dependencies(tt: Iterable['TM']) -> Generator[
-            Tuple['TM', list[Path]], None, None]:
-        for t in tt:
-            yield t, t.production_dependencies()
+    def dependencies(tt: Iterable['TM']) -> list[Tuple['TM', list[Path]]]:
+        return [(tm, [d for d in tm.production_dependencies()]) for tm in tt]
 
 
-def run_watcher(dir: Dir, should_quite: Queue):
-    while True:
-        try:
-            should_quite.get(False)
-        except Empty:
-            pass
-        else:
-            break
-        time.sleep(0.3)
-    print("gracefully stopped")
+mp_pool = None  # type: None|Pool
 
 
-def quitClosure(q: Queue) -> callable:
+def dep_gen(tm: TM) -> Tuple[TM, list[Path]]:
+    return tm, [p for p in tm.production_dependencies()]
+
+
+def parallel_dep_gen(tt: Iterable[TM]) -> list[Tuple[TM, list[Path]]]:
+    if mp_pool:
+        return mp_pool.map(dep_gen, tt)
+    return []
+
+
+def run_tests(
+    pool: Pool, dir: Dir, tt: Iterable[Path]
+) -> Tuple[list[str], dict[str, str]]:
+    rr = pool.map(dir.run_test_module, tt)
+    ss = []  # type: list[str]
+    ee = dict()  # type: dict[str,str]
+    for r in rr:
+        if len(r[0]):
+            ss.extend(r[0])
+        if len(r[1]):
+            ee.update(ee)
+    return ss, ee
+
+
+def dbg_run(dir: Dir, pool: Pool, tui: TUI) -> bool:
+    analysis = dir.test_modules_to_run()  # uses also the pool
+    if len(analysis):
+        ss, ee = run_tests(pool, dir, analysis)
+        tui.print_summary(ss, len(ee) > 0)
+        tui.print_analysis(
+            (str(tm) for tm in analysis.mod_tt),
+            dict((p, (str(t) for t in ttm))
+                 for p, ttm in analysis.mod_pp.items())
+        )
+    else:
+        tui.write_line('no tests to run')
+    try:
+        input('\npress enter for the next tests-run')
+    except EOFError:
+        return True
+    return False
+
+
+def watcher(dir: Dir, should_quite: Queue, dbg: bool):
+    tui = TUI()
+    with multiprocessing.Pool() as pool:
+        global mp_pool
+        mp_pool = pool
+        dir._dep_gen = parallel_dep_gen
+        while True:
+            try:
+                should_quite.get(False)
+            except Empty:
+                pass
+            else:
+                break
+            if dbg:
+                if dbg_run(dir, pool, tui):
+                    break
+                continue
+            tt = dir.test_modules_to_run()  # uses also the pool
+            if len(tt):
+                ss, ee = run_tests(pool, dir, tt)
+                parsed = tui.print_summary(ss, len(ee) > 0)
+                if len(ee):
+                    tui.print_failed_modules(ee)
+                if len(parsed):
+                    tui.print_suites(parsed)
+            time.sleep(0.3)
+        print("gracefully stopped")
+
+
+def quitClosure(q: Queue) -> Callable[[Any, Any], None]:
     return lambda sig, frame: q.put(True)
+
+
+ARG_IGNORE_PKG = '--ignore-pkg='
+ARG_IGNORE_MDL = '--ignore-pkg='
+ARG_DBG = '--dbg'
+
+
+def process_args(dir: Dir) -> bool:
+    dbg = False
+    for arg in sys.argv[1:]:
+        if arg.startswith(ARG_IGNORE_PKG):
+            dir._ignore_packages.append(arg.split("=")[1])
+        if arg.startswith(ARG_IGNORE_MDL):
+            dir._ignore_modules.append(arg.split("=")[1])
+        if arg == ARG_DBG:
+            dbg = True
+    return dbg
 
 
 if __name__ == '__main__':
@@ -423,9 +515,11 @@ if __name__ == '__main__':
         dir = Dir(os.getcwd())
     except DirNoPackage:
         print('can only watch packages (dir with __init__.py file)' +
-            f'\n  {os.getcwd()}\nis no package.')
+              f'\n  {os.getcwd()}\nis no package.')
         sys.exit(1)
     else:
-        quitQueue = Queue()
+
+        quitQueue = Queue()  # type: Queue
         signal.signal(signal.SIGINT, quitClosure(quitQueue))
-        run_watcher(dir, quitQueue)
+        dbg = process_args(dir)
+        watcher(dir, quitQueue, dbg)

@@ -25,7 +25,7 @@ testing_path = Path('/home/goedel/python/pyunit/testing.py')
 sub_packages = {
     golden,
     golden_tests,
-    golden.joinpath('flat'), 
+    golden.joinpath('flat'),
     golden.joinpath('flat/is_better'),
     golden.joinpath('flat/is_better/than_nested'),
     golden.joinpath('failed')
@@ -108,7 +108,7 @@ class AWatcher:
 
     def finds_watched_sub_packages_of_initial_dir(self, t: T):
         got = set(d.dir for d in watcher.Dir(str(golden)).sub_packages())
-        t.truthy(sub_packages == got)
+        t.truthy(sub_packages == got, f'{sub_packages} != {got}')
 
     def finds_test_modules_in_watched_sub_packages(self, t: T):
         w = watcher.Dir(str(golden))
@@ -131,8 +131,8 @@ class AWatcher:
 
     def runs_initially_all_test_modules(self, t: T):
         w = watcher.Dir(str(golden))
-        t.truthy(golden_test_modules 
-            == set(tm.path for tm in w.test_modules_to_run()))
+        t.truthy(golden_test_modules
+                 == set(tm for tm in w.test_modules_to_run()))
 
     def runs_modified_test(self, t: T):
         w = watcher.Dir(str(golden))
@@ -140,7 +140,7 @@ class AWatcher:
         tp = golden_test_modules.pop()
         time.sleep(0.01)
         os.utime(str(tp))
-        t.truthy(tp == w.test_modules_to_run().pop().path)
+        t.truthy(tp == w.test_modules_to_run().pop())
 
     def runs_tests_importing_modified_production_modules(self, t: T):
         w = watcher.Dir(str(golden))
@@ -148,9 +148,9 @@ class AWatcher:
         time.sleep(0.01)
         for pm, tt in golden_pm_dependencies.items():
             os.utime(str(pm))
-            t.truthy(tt == set(tm.path for tm in w.test_modules_to_run()),
-                f'{tt} != {set(tm.path for tm in w.test_modules_to_run())}')
-        
+            t.truthy(tt == set(tm for tm in w.test_modules_to_run()),
+                     f'{tt} != {set(tm.path for tm in w.test_modules_to_run())}')
+
     def reports_the_number_of_run_and_failed_tests(self, t: T):
         out = io.StringIO()
         w, ss, ee = watcher.Dir(str(golden)), [], dict()
@@ -160,16 +160,9 @@ class AWatcher:
                 ss.extend(_ss)
             if len(_ee):
                 ee.update(_ee)
-        w.print(ss, ee, tui.TUI(out))
+        tui.TUI(out).print_summary(ss, len(ee) > 0)
         t.truthy('8' in out.getvalue())
         t.truthy('4' in out.getvalue())
-
-
-    # def test_reporting(self, t: T):
-    #     out = io.StringIO()
-    #     w = watcher.Dir(str(golden))
-    #     w.run_test_modules(out=out)
-    #     t.log(out.getvalue())
 
 
 if __name__ == '__main__':
