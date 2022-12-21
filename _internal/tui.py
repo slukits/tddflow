@@ -4,7 +4,8 @@
 # Use of this source code is governed by a MIT-style
 # license that can be found in the LICENSE file.
 
-from typing import TextIO, Any, Iterable
+from typing import TextIO, Any, Iterable, NamedTuple
+from pathlib import Path
 
 import os
 import sys
@@ -22,6 +23,14 @@ GREEN_BG = "\033[42m"
 WHITE_FG = "\033[37m"
 RESET = "\033[0m"
 RESET_COLORS = "\033[39;49m"
+
+
+class Args(NamedTuple):
+    frq: float
+    tm_out: float
+    mappings: dict[Path, Path]
+    ignore_pkg: list[str]
+    ignore_mdl: list[str]
 
 
 class TUI:
@@ -59,7 +68,9 @@ class TUI:
         """
         self._out.write(f'{" "*indent}{s}\n')
 
-    def print_summary(self, ss: list[str], failed: bool = False) -> list[Any]:
+    def print_summary(
+        self, ss: list[str], elapsed: float, failed: bool = False
+    ) -> list[Any]:
         """
         print_summary parses give json suit-test-runs outputs ss and
         writes the run's summary of executed and failed tests.  Parsed
@@ -74,12 +85,27 @@ class TUI:
                 fails_count += jsn[JSN_FAILS_COUNT]
                 parsed.append(jsn)
         summary = (f'pyunit: watcher: run {tests_count} tests of ' +
-                   f'witch {fails_count} failed')
+                   f'witch {fails_count} failed in {elapsed}s')
         if fails_count or failed:
             self.write_line(self.failed(summary))
         else:
             self.write_line(self.passed(summary))
         return parsed
+
+    def print_args(self, args: Args):
+        self.write_line(f'analysis frequency: {args.frq}s, ' +
+            f'test-run timeout: {args.tm_out}s')
+        self.write_line('ignored packages:')
+        self.write_line('    '+'\n    '.join(args.ignore_pkg))
+        self.write_line('ignored modules:')
+        self.write_line('    '+'\n    '.join(args.ignore_mdl))
+        if not len(args.mappings):
+            self.write_line()
+            return
+        self.write_line('production-test mappings:')
+        self.write_line('    '+'\n    '.join(
+            f'{p}->{t}' for p, t in args.mappings.items()))
+        self.write_line()
 
     def print_analysis(
         self, ttm: Iterable[str], ppm: dict[str, Iterable[str]]

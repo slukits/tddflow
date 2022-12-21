@@ -9,8 +9,8 @@ from typing import Generator, Tuple, FrozenSet, Callable, Iterable, Any, Iterato
 import ast
 import os
 import sys
-import json
 import time
+from datetime import datetime
 from pathlib import Path
 from multiprocessing.pool import Pool
 import multiprocessing
@@ -25,7 +25,7 @@ from pyunit._internal.reporting import (
     JSN_TESTS_COUNT, JSN_FAILS_COUNT, JSN_TEST_SUITE, JSN_FAILS,
     JSN_TEST_LOGS)
 
-from pyunit._internal.tui import TUI
+from pyunit._internal.tui import TUI, Args
 
 REPORT_ARG = '--report=json'
 
@@ -44,7 +44,7 @@ class Dir:
     def __init__(
         self, dir: str,
         dep_gen: Callable[
-            [Iterable['TM']], list[Tuple['TM', list[Path]]]] | None = None
+            [Iterable['TM']], list[Tuple[Path, list[Path]]]] | None = None
     ) -> None:
         """
         init initializes a watched directory and fails if directory is
@@ -62,8 +62,29 @@ class Dir:
         if str(root.parent) not in sys.path:
             sys.path.insert(0, str(root.parent))
         self._dep_gen = dep_gen or TM.dependencies
-        self._last_snapshot = Snapshot(frozenset(), frozenset(), self._dep_gen)
+        self._last_snapshot = Snapshot(
+            frozenset(), frozenset(), self._dep_gen, self.mappings())
         self.timeout = 10.0  # type: float
+
+    def map(self, s: str):
+        if '->' not in s: return
+        p, t = s.split("->", maxsplit=1)
+        if self.root_package.joinpath(p).exists():
+            p = self.root_package.joinpath(p)
+        if self.root_package.joinpath(t).exists():
+            t = self.root_package.joinpath(t)
+        try:
+            self.static_maps[p].append(Path(t))
+        except AttributeError:
+            self.static_maps = {p: [Path(t)]}
+        except KeyError:
+            self.static_maps[p] = [Path(t)]
+
+    def mappings(self) -> dict[Path, list[Path]]:
+        try:
+            return self.static_maps
+        except AttributeError:
+            return dict()
 
     def is_package(self, dir: Path) -> bool:
         """
@@ -122,8 +143,9 @@ class Dir:
         test-module by either having a test_ prefix or a "_test.py"
         suffix. It returns False otherwise.
         """
-        return (p.name.startswith("test_")
+        return ((p.name.startswith("test_")
                 or p.name.endswith("_test.py"))
+                and p.name not in self._ignore_modules)
 
     def production_modules(self) -> Generator[Path, None, None]:
         for p in self.sub_packages():
@@ -139,7 +161,7 @@ class Dir:
 
     def is_production(self, p: Path) -> bool:
         return (not p.is_dir() and p.name.endswith(".py")
-                and not p.name in self._ignore_modules
+                and p.name not in self._ignore_modules
                 and not self.is_test_module(p))
 
     def test_modules_to_run(self) -> 'Analysis':
@@ -152,7 +174,7 @@ class Dir:
         now = Snapshot(
             frozenset(tm for tm in self.test_modules()),
             frozenset(pm for pm in self.production_modules()),
-            self._dep_gen
+            self._dep_gen, self.mappings()
         )
         tt = self._last_snapshot.updated(now)
         self._last_snapshot = now
@@ -206,11 +228,13 @@ class Snapshot:
         self,
         tt: FrozenSet['TM'],
         pp: FrozenSet[Path],
-        dep_gen: Callable[[Iterable['TM']], list[Tuple['TM', list[Path]]]]
+        dep_gen: Callable[[Iterable['TM']], list[Tuple[Path, list[Path]]]],
+        static_mappings: dict[Path, list[Path]]
     ) -> None:
         self.tt = tt
         self.pp = pp
         self.dep_gen = dep_gen
+        self.static_mappings = static_mappings
         self.mt = dict()  # type: dict[str, float]
         for t in tt:
             self.mt[t.path.as_posix()] = t.path.stat().st_mtime_ns
@@ -228,17 +252,15 @@ class Snapshot:
         for p in other.pp:
             if (p.as_posix() not in self.mt
                     or p.stat().st_mtime_ns > self.mt[p.as_posix()]):
-                analysis.mod_pp[str(p)] = set()
-                for tm in other.production_to_test(p):
-                    analysis.mod_pp[str(p)].add(tm)
+                analysis.mod_pp[str(p)] = other.production_to_test(p)
         for tm in other.tt:
             if (tm.path.as_posix() not in self.mt
                     or tm.path.stat().st_mtime_ns
-                    > self.mt[tm.path.as_posix()]):
-                analysis.mod_tt.add(tm)
+                        > self.mt[tm.path.as_posix()]):
+                analysis.mod_tt.add(tm.path)
         return analysis
 
-    def production_to_test(self, prd: Path):
+    def production_to_test(self, prd: Path) -> list[Path]:
         """
         production_to_test returns all test-modules importing the
         production module with given Path prd.
@@ -246,12 +268,20 @@ class Snapshot:
         try:
             return self._pp_to_tt[prd.as_posix()]
         except AttributeError:
-            self._pp_to_tt = dict()  # type: dict[str, list[TM]]
+            self._pp_to_tt = dict()  # type: dict[str, set[Path]]
             for tm, dd in self.dep_gen(self.tt):
                 for d in dd:
                     if d.as_posix() not in self._pp_to_tt:
-                        self._pp_to_tt[d.as_posix()] = []
-                    self._pp_to_tt[d.as_posix()].append(tm)
+                        self._pp_to_tt[d.as_posix()] = set()
+                    self._pp_to_tt[d.as_posix()].add(tm)
+            for d, tt in self.static_mappings.items():
+                if d not in self.pp:
+                    continue
+                try:
+                    self._pp_to_tt[d.as_posix()] = self._pp_to_tt[
+                        d.as_posix()].union(tt)
+                except KeyError:
+                    self._pp_to_tt[d.as_posix()] = set(tt)
         except KeyError:
             return []
         if prd.as_posix() not in self._pp_to_tt:
@@ -268,8 +298,8 @@ class Analysis:
     """
 
     def __init__(self) -> None:
-        self.mod_tt = set()  # type: set[TM]
-        self.mod_pp = dict()  # type: dict[str, set[TM]]
+        self.mod_tt = set()  # type: set[Path]
+        self.mod_pp = dict()  # type: dict[str, set[Path]]
 
     def __iter__(self) -> Iterator[Path]:
         return (tm for tm in self.tt)
@@ -286,9 +316,9 @@ class Analysis:
             return self._tt
         except AttributeError:
             self._tt = set()  # type: set[Path]
-            self._tt = self._tt.union(t.path for t in self.mod_tt)
+            self._tt = self._tt.union(t for t in self.mod_tt)
             for ptm in self.mod_pp.values():
-                self._tt = self._tt.union(t.path for t in ptm)
+                self._tt = self._tt.union(t for t in ptm)
         return self._tt
 
 
@@ -408,18 +438,18 @@ class TM:
         return None
 
     @staticmethod
-    def dependencies(tt: Iterable['TM']) -> list[Tuple['TM', list[Path]]]:
-        return [(tm, [d for d in tm.production_dependencies()]) for tm in tt]
+    def dependencies(tt: Iterable['TM']) -> list[Tuple[Path, list[Path]]]:
+        return [(tm.path, [d for d in tm.production_dependencies()]) for tm in tt]
 
 
 mp_pool = None  # type: None|Pool
 
 
-def dep_gen(tm: TM) -> Tuple[TM, list[Path]]:
-    return tm, [p for p in tm.production_dependencies()]
+def dep_gen(tm: TM) -> Tuple[Path, list[Path]]:
+    return tm.path, [p for p in tm.production_dependencies()]
 
 
-def parallel_dep_gen(tt: Iterable[TM]) -> list[Tuple[TM, list[Path]]]:
+def parallel_dep_gen(tt: Iterable[TM]) -> list[Tuple[Path, list[Path]]]:
     if mp_pool:
         return mp_pool.map(dep_gen, tt)
     return []
@@ -439,17 +469,29 @@ def run_tests(
     return ss, ee
 
 
-def dbg_run(dir: Dir, pool: Pool, tui: TUI) -> bool:
+def dbg_run(dir: Dir, pool: Pool, tui: TUI, frq: float) -> bool:
     analysis = dir.test_modules_to_run()  # uses also the pool
+    args = Args(
+        frq=frq,
+        tm_out=dir.timeout,
+        ignore_pkg=dir._ignore_packages,
+        ignore_mdl=dir._ignore_modules,
+        mappings=dict()
+    )
     if len(analysis):
+        start = datetime.now()
         ss, ee = run_tests(pool, dir, analysis)
-        tui.print_summary(ss, len(ee) > 0)
+        elapsed = (datetime.now() - start).total_seconds()
+        tui.print_summary(ss, round(elapsed, 3), len(ee) > 0)
+        tui.print_args(args)
         tui.print_analysis(
             (str(tm) for tm in analysis.mod_tt),
             dict((p, (str(t) for t in ttm))
                  for p, ttm in analysis.mod_pp.items())
         )
     else:
+        tui.print_summary([], False)
+        tui.print_args(args)
         tui.write_line('no tests to run')
     try:
         input('\npress enter for the next tests-run')
@@ -458,7 +500,7 @@ def dbg_run(dir: Dir, pool: Pool, tui: TUI) -> bool:
     return False
 
 
-def watcher(dir: Dir, should_quite: Queue, dbg: bool):
+def watcher(dir: Dir, should_quite: Queue, frq: float, dbg: bool):
     tui = TUI()
     with multiprocessing.Pool() as pool:
         global mp_pool
@@ -472,54 +514,18 @@ def watcher(dir: Dir, should_quite: Queue, dbg: bool):
             else:
                 break
             if dbg:
-                if dbg_run(dir, pool, tui):
+                if dbg_run(dir, pool, tui, frq):
                     break
                 continue
             tt = dir.test_modules_to_run()  # uses also the pool
             if len(tt):
+                start = datetime.now()
                 ss, ee = run_tests(pool, dir, tt)
-                parsed = tui.print_summary(ss, len(ee) > 0)
+                elapsed = (datetime.now() - start).total_seconds()
+                parsed = tui.print_summary(ss, round(elapsed, 3), len(ee) > 0)
                 if len(ee):
                     tui.print_failed_modules(ee)
                 if len(parsed):
                     tui.print_suites(parsed)
-            time.sleep(0.3)
-        print("gracefully stopped")
-
-
-def quitClosure(q: Queue) -> Callable[[Any, Any], None]:
-    return lambda sig, frame: q.put(True)
-
-
-ARG_IGNORE_PKG = '--ignore-pkg='
-ARG_IGNORE_MDL = '--ignore-pkg='
-ARG_DBG = '--dbg'
-
-
-def process_args(dir: Dir) -> bool:
-    dbg = False
-    for arg in sys.argv[1:]:
-        if arg.startswith(ARG_IGNORE_PKG):
-            dir._ignore_packages.append(arg.split("=")[1])
-        if arg.startswith(ARG_IGNORE_MDL):
-            dir._ignore_modules.append(arg.split("=")[1])
-        if arg == ARG_DBG:
-            dbg = True
-    return dbg
-
-
-if __name__ == '__main__':
-    import signal
-
-    try:
-        dir = Dir(os.getcwd())
-    except DirNoPackage:
-        print('can only watch packages (dir with __init__.py file)' +
-              f'\n  {os.getcwd()}\nis no package.')
-        sys.exit(1)
-    else:
-
-        quitQueue = Queue()  # type: Queue
-        signal.signal(signal.SIGINT, quitClosure(quitQueue))
-        dbg = process_args(dir)
-        watcher(dir, quitQueue, dbg)
+            time.sleep(frq)
+        print('\npyunit: gracefully stopped\n')

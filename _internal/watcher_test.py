@@ -39,6 +39,9 @@ golden_test_modules = {
     golden_tests.joinpath('test_prefix_dir.py')
 }
 
+
+deep = golden.joinpath('flat/is_better/than_nested/deep.py')
+
 golden_tm_dependencies = {
     golden.joinpath('suffix_test.py'): {
         testing_path,
@@ -56,7 +59,7 @@ golden_tm_dependencies = {
     golden_tests.joinpath('test_prefix_dir.py'): {
         testing_path,
         golden.joinpath('pm2.py'),
-        golden.joinpath('flat/is_better/than_nested/deep.py')
+        deep
     }
 }
 
@@ -67,16 +70,16 @@ golden_pm_dependencies = {
         golden_tests.joinpath('suffix_dir_test.py'),
         golden_tests.joinpath('test_prefix_dir.py')
     },
-    os.path.join(golden, 'pm1.py'): {
+    golden.joinpath('pm1.py'): {
         golden.joinpath('suffix_test.py'),
         golden.joinpath('test_prefix.py'),
         golden_tests.joinpath('suffix_dir_test.py')
     },
-    os.path.join(golden, 'pm2.py'): {
+    golden.joinpath('pm2.py'): {
         golden.joinpath('suffix_test.py'),
         golden_tests.joinpath('test_prefix_dir.py')
     },
-    os.path.join(golden, 'flat/is_better/than_nested/deep.py'): {
+    deep: {
         golden_tests.joinpath('test_prefix_dir.py')
     }
 }
@@ -137,19 +140,24 @@ class AWatcher:
     def runs_modified_test(self, t: T):
         w = watcher.Dir(str(golden))
         w.test_modules_to_run()
-        tp = golden_test_modules.pop()
+        tm = golden_test_modules.pop()
+        at, mt = tm.stat().st_atime,  tm.stat().st_mtime
         time.sleep(0.01)
-        os.utime(str(tp))
-        t.truthy(tp == w.test_modules_to_run().pop())
+        os.utime(str(tm))
+        t.truthy(tm == w.test_modules_to_run().pop())
+        time.sleep(0.01)
+        os.utime(str(tm), (at, mt))
 
     def runs_tests_importing_modified_production_modules(self, t: T):
         w = watcher.Dir(str(golden))
         w.test_modules_to_run()
         time.sleep(0.01)
         for pm, tt in golden_pm_dependencies.items():
+            at, mt = pm.stat().st_atime,  pm.stat().st_mtime
             os.utime(str(pm))
             t.truthy(tt == set(tm for tm in w.test_modules_to_run()),
-                     f'{tt} != {set(tm.path for tm in w.test_modules_to_run())}')
+                     f'{tt} != {set(tm for tm in w.test_modules_to_run())}')
+            os.utime(str(pm), (at, mt))
 
     def reports_the_number_of_run_and_failed_tests(self, t: T):
         out = io.StringIO()
@@ -163,6 +171,22 @@ class AWatcher:
         tui.TUI(out).print_summary(ss, len(ee) > 0)
         t.truthy('8' in out.getvalue())
         t.truthy('4' in out.getvalue())
+    
+    def respects_a_static_production_test_module_mapping(self, t: T):
+        w, tm = watcher.Dir(str(golden)), golden.joinpath("suffix_test.py")
+        w.test_modules_to_run()
+        at, mt = deep.stat().st_atime,  deep.stat().st_mtime
+        time.sleep(0.01)
+        os.utime(str(deep))
+        analysis = w.test_modules_to_run()
+        t.truthy(tm not in analysis)
+        w.map(f'{deep}->{tm}')
+        time.sleep(0.01)
+        os.utime(str(deep))
+        analysis = w.test_modules_to_run()
+        t.truthy(tm in analysis)
+        time.sleep(0.01)
+        os.utime(str(deep), (at, mt))
 
 
 if __name__ == '__main__':
