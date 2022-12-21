@@ -502,6 +502,7 @@ def dbg_run(dir: Dir, pool: Pool, tui: TUI, frq: float) -> bool:
 
 def watcher(dir: Dir, should_quite: Queue, frq: float, dbg: bool):
     tui = TUI()
+    first = True
     with multiprocessing.Pool() as pool:
         global mp_pool
         mp_pool = pool
@@ -519,6 +520,8 @@ def watcher(dir: Dir, should_quite: Queue, frq: float, dbg: bool):
                 continue
             tt = dir.test_modules_to_run()  # uses also the pool
             if len(tt):
+                if first:
+                    first = False
                 start = datetime.now()
                 ss, ee = run_tests(pool, dir, tt)
                 elapsed = (datetime.now() - start).total_seconds()
@@ -527,5 +530,8 @@ def watcher(dir: Dir, should_quite: Queue, frq: float, dbg: bool):
                     tui.print_failed_modules(ee)
                 if len(parsed):
                     tui.print_suites(parsed)
+            elif first:
+                first = False
+                tui.print_summary([], 0.000)
             time.sleep(frq)
         print('\npyunit: gracefully stopped\n')

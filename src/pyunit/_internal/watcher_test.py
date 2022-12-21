@@ -20,7 +20,8 @@ golden = Path(os.path.abspath(
 
 golden_tests = golden.joinpath('tests')
 
-testing_path = Path('/home/goedel/python/pyunit/testing.py')
+testing_path = Path(os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '../testing.py')))
 
 sub_packages = {
     golden,

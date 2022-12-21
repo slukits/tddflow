@@ -72,7 +72,7 @@ import os
 import sys
 from multiprocessing import Queue
 
-from _internal.watcher import Dir, watcher, DirNoPackage
+from pyunit._internal.watcher import Dir, watcher, DirNoPackage
 
 def quitClosure(q: Queue) -> Callable[[Any, Any], None]:
     return lambda sig, frame: q.put(True)

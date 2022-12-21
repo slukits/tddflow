@@ -1,8 +1,7 @@
 # gounit
 
 Oh my, why an other testing framework?  Because implementing a testing
-framework is an excellent exercise to get into a language.  Following
-these jolly good ideas:
+framework is an excellent exercise to get into a language.  Following:
 
 - beautiful is better then ugly (Tim Peters)
 - easy things should be easy, and hard things possible (Larry Wall)
@@ -40,7 +39,7 @@ if __name__ == '__main__':
 ... could become:
 
 ```py
-from pyunit import runTests, T
+from pyunit import run, T
 
 class AString: 
 
@@ -62,39 +61,41 @@ class AString:
         t.raises(lambda: s.split(2), TypeError)
 
 if __name__ == '__main__':
-    runTests(AString)
+    run(AString)
 ```
 
-Not repeating eight times the word test or four times the word assert.
-By factoring features for assertion and test control flow out from the
-test suite in its own type (inspired by the Go testing framework)
-cluttering of the test suite's namespace is avoided, no need for
-inheritance, no need for uppercase methods, no need for "marking" tests;
-i.e. noise through repetition is down to a minimum while our IDE will
-still offer us the T-API because of the type hinting.
+Not repeating eight times the word 'test' or four times the word
+'assert'.  By factoring features for assertion and test control flow out
+from the test suite in its own type (inspired by the Go testing
+framework) cluttering of the test suite's namespace is avoided, no need
+for inheritance, no need for uppercase methods, no need for "marking"
+tests; i.e. noise through repetition is down to a minimum while our IDE
+will still offer us the T-API because of the type hinting.
 
-Now imagine a little program which watches the directory we're working
-on and always if a file whose name matches "*_test.py" is updated (yes
-it's just a lot more useful to have a test file next to the module it
-tests) it runs its test-suite(s) and reports the executed tests in the
-following manner:
+To make this little exercise (more) useful we want to add also a pyunit
+command
 
-    a string
-        can be capitalized
-        can determine if it is upper case
-        can be split into a list of strings at spaces
-        split fails if a given separator is not a string
+```
+    python -m pyunit
+```
 
-Imagine what it does to our focus if we work on a module of which we
-have always an outline of its implemented behavior available.  Imagine
-we choose our tests in a way that we always try to find the next most
-simple yet not trivial missing behavior as our next test.  Then we not
-only have an outline of the implemented behavior available but also the
-thought process which led there.
+which should watch the modules of the package it was executed in
+together with its sub-packages for modifications on test or production
+modules.  Is a test module modified it should be automatically executed
+and the result of the test run should be reported.  As well as all test
+modules importing absolute a modified production module should be
+executes on its modification.  If all tests succeed we get the "green
+bar" if not we get the "red bar" and failed tests are reported.  It also
+should report "logging tests", i.e. if a test is executed containing a
+line
 
-Hence it looks like this little exercise has the potential to pay of.
-Especially since we can build on top of an exemplary implementation of
-Kent Beck from his "Test-Driven Development By Example" book.  There he
-writes: "Driving a testing tool using the testing tool itself to run the
-tests may seem a bit like performing brain surgery on yourself." Doesn't
-that sound like fun?  [Tag along](01_ran.md) if you feel like it.
+    t.log(type(interesting_value))
+
+it will report the test with the logged text which comes in handy in
+my experience.
+
+Kent Beck writes in "Test-Driven Development By Example": "Driving a
+testing tool using the testing tool itself to run the tests may seem a
+bit like performing brain surgery on yourself." Doesn't that sound like
+fun?  [Tag along](https://github.com/slukits/pyunit/blob/main/01_ran.md)
+if you feel like it.
