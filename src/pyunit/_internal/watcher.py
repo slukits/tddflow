@@ -500,7 +500,33 @@ def dbg_run(dir: Dir, pool: Pool, tui: TUI, frq: float) -> bool:
     return False
 
 
-def watcher(dir: Dir, should_quite: Queue, frq: float, dbg: bool):
+def run_modules(
+    pool: Pool, dir: Dir, tt: Iterable[Path], tui: TUI, first: bool, frq: float
+) -> bool:
+    if len(tt):
+        if first:
+            first = False
+        start = datetime.now()
+        ss, ee = run_tests(pool, dir, tt)
+        elapsed = (datetime.now() - start).total_seconds()
+        parsed = tui.print_summary(ss, round(elapsed, 3), len(ee) > 0)
+        if len(ee):
+            tui.print_failed_modules(ee)
+        if len(parsed):
+            tui.print_suites(parsed)
+    elif first:
+        first = False
+        tui.print_summary([], 0.000)
+    time.sleep(frq)
+    return first
+
+
+def watcher(
+    dir: Dir, 
+    should_quite: Queue, 
+    frq: float,
+    dbg: bool
+):
     tui = TUI()
     first = True
     with multiprocessing.Pool() as pool:
@@ -514,24 +540,24 @@ def watcher(dir: Dir, should_quite: Queue, frq: float, dbg: bool):
                 pass
             else:
                 break
+            try:
+                c = tui.inp.get(False)
+            except Empty:
+                pass
+            else:
+                if c == 'q':
+                    break
+                if c == 'a':
+                    first = run_modules(pool, dir,
+                        [tm.path for tm in dir.test_modules()],
+                        tui, first, frq
+                    )
+                    continue
             if dbg:
                 if dbg_run(dir, pool, tui, frq):
                     break
                 continue
             tt = dir.test_modules_to_run()  # uses also the pool
-            if len(tt):
-                if first:
-                    first = False
-                start = datetime.now()
-                ss, ee = run_tests(pool, dir, tt)
-                elapsed = (datetime.now() - start).total_seconds()
-                parsed = tui.print_summary(ss, round(elapsed, 3), len(ee) > 0)
-                if len(ee):
-                    tui.print_failed_modules(ee)
-                if len(parsed):
-                    tui.print_suites(parsed)
-            elif first:
-                first = False
-                tui.print_summary([], 0.000)
-            time.sleep(frq)
+            first = run_modules(pool, dir, tt, tui, first, frq)
+        tui.restore()
         print('\npyunit: gracefully stopped\n')

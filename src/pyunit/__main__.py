@@ -91,7 +91,7 @@ class HelpRequest(Exception): pass
 
 
 def process_args(dir: Dir) -> Tuple[float, bool]:
-    dbg, frq, tm_out = False, 0.3, 20.0
+    dbg, frq, tm_out = False, 0.5, 20.0
     for arg in sys.argv[1:]:
         if arg.startswith(ARG_IGNORE_PKG):
             dir._ignore_packages.append(arg.split("=")[1])

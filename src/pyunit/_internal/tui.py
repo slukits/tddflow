@@ -5,11 +5,34 @@
 # license that can be found in the LICENSE file.
 
 from typing import TextIO, Any, Iterable, NamedTuple
-from pathlib import Path
 
 import os
 import sys
 import json
+import time
+
+from pathlib import Path
+from queue import Queue
+from threading import Thread
+
+
+if os.name == 'nt':
+    import msvcrt
+else:
+    import termios
+    import atexit
+    from select import select
+
+
+def non_blocking_kb(q: Queue):
+    while True:
+        if os.name == 'nt' and msvcrt.kbhit():
+            q.put(msvcrt.getch().decode('utf-8'))
+            continue
+        dr, _, _ = select([sys.stdin], [], [], 0)
+        if dr != []:
+            q.put(sys.stdin.read(1))
+        time.sleep(0.2)
 
 
 from pyunit._internal.reporting import (
@@ -23,6 +46,8 @@ GREEN_BG = "\033[42m"
 WHITE_FG = "\033[37m"
 RESET = "\033[0m"
 RESET_COLORS = "\033[39;49m"
+HIDE_CURSOR = "\033[?25l"
+SHOW_CURSOR = "\033[?25h"
 
 
 class Args(NamedTuple):
@@ -41,8 +66,29 @@ class TUI:
     needed.
     """
 
-    def __init__(self, out: TextIO = sys.stdout):
+    def __init__(self, out: TextIO = sys.stdout, inp: Queue|None=None):
         self._out = out
+        self.inp = Queue()
+        if self._out.isatty():
+            self._out.write(HIDE_CURSOR)
+            if os.name != 'nt':
+                self.fd = sys.stdin.fileno()
+                self.new_term = termios.tcgetattr(self.fd)
+                self.old_term = termios.tcgetattr(self.fd)
+                self.new_term[3] = (
+                    self.new_term[3] & ~termios.ICANON & ~termios.ECHO)
+                termios.tcsetattr(self.fd, termios.TCSAFLUSH, self.new_term)
+                atexit.register(lambda: termios.tcsetattr(
+                    self.fd, termios.TCSAFLUSH, self.old_term))
+            self.kb = Thread(target=non_blocking_kb, args=(self.inp,), daemon=True)
+            self.kb.start()
+
+    def restore(self):
+        if self._out.isatty():
+            self._out.write(SHOW_CURSOR)
+            if os.name != 'nt':
+                termios.tcsetattr(
+                    self.fd, termios.TCSAFLUSH, self.old_term)
 
     def clear(self) -> None:
         """clears the screen os independent."""
