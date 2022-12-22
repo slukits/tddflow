@@ -68,10 +68,6 @@ class Report:
             self.tests[name] = t
         t.logs.append(msg)
 
-    def print(self, suite: str, out: TextIO):
-        raise NotImplementedError(
-            "pyunit: report: print not implemented")
-
 
 class Default(Report):
     """
@@ -115,9 +111,12 @@ class TDD(Report):
         for name, attrs in self.tests.items():
             if not len(attrs.logs):
                 continue
+            LL = [LL.split("\n") for LL in attrs.logs]
             log = '    "{}": [\n      {}\n    ]'.format(
                 name,
-                ",\n      ".join(f'"{L}"' for L in attrs.logs)
+                ",\n      ".join(
+                    '"{}"'.format(L.replace('"', '\\"')) 
+                        for L in [L for _LL in LL for L in _LL])
             )
             logs.append(log)
         if len(logs):
