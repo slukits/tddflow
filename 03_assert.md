@@ -3,17 +3,18 @@
 To test drive the watcher implementation the assert_.T type with the
 only assertion 'truthy' was already extended by the methods
 
-    - failed(bool[, str]) to flag a test as failed but continuing its 
-      execution
-    - fatal([str]) to flag a test as failed and stop its execution
-    - fatal_if_not(bool[, str]) to fail and stop a test if given 
-      argument doesn't evaluate to true.  Since all asserting methods
-      return True in case of success and False otherwise fatal_if_not
-      can be used abort a test in case a specific assertion fails.
-    - raises(Callable, Type, str) asserts if given callable raises an
-      exception of given type
-    - log(str) logs given string as output to the test it was called
-      in.  Since the watcher reports also logging tests this is an easy and quick way to investigate a return or variable value.
+- failed(bool[, str]) to flag a test as failed but continuing its 
+  execution
+- fatal([str]) to flag a test as failed and stop its execution
+- fatal_if_not(bool[, str]) to fail and stop a test if given 
+  argument doesn't evaluate to true.  Since all asserting methods
+  return True in case of success and False otherwise fatal_if_not
+  can be used abort a test in case a specific assertion fails.
+- raises(Callable, Type, str) asserts if given callable raises an
+  exception of given type
+- log(str) logs given string as output to the test it was called
+  in.  Since the watcher reports also logging tests this is an 
+  easy and quick way to investigate a return or variable value.
 
 While any assertion is transformable into a True/False statement
 "expecting 'False' to be truthy" is not a very useful error message
@@ -23,8 +24,8 @@ should be added:
 - falsy(bool[, str]) fails a test iff given bool is truthy
 - in(Any, Iterable[Any][, str]) Note an [argument] argument is 
   optional while collection[type-info] specifies a collection's
-  elements.  *in* fails the test if given element is not in given
-  iterable.
+  element's type.  *in* fails the test if given element is not in
+  given iterable.
 - not_in(Any, Iterable[Any][, str]) fails the test if given element
   is in given iterable.
 - eq(Any, Any) fails the test if given arguments are not equal (!=).
