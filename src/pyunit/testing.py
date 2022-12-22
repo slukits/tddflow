@@ -31,7 +31,7 @@ def run(suite: Any, config: Config | None = None):
     given suite iff c is non-special and non-dunder.  Each call gets a T
     instance for controlling the test-flow and assertions.
 
-        class TestedSubject():
+        class TestedSubject:
 
             def expected_behavior(self, t: pyunit.T):
                 t.breakIfNot(t.truthy(True))
