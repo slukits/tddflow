@@ -514,9 +514,11 @@ def run_modules(
             tui.print_failed_modules(ee)
         if len(parsed):
             tui.print_suites(parsed)
+        tui.print_buttons()
     elif first:
         first = False
         tui.print_summary([], 0.000)
+        tui.print_buttons()
     time.sleep(frq)
     return first
 
@@ -547,11 +549,15 @@ def watcher(
             else:
                 if c == 'q':
                     break
-                if c == 'a':
+                if c == 'r':
                     first = run_modules(pool, dir,
                         [tm.path for tm in dir.test_modules()],
                         tui, first, frq
                     )
+                    continue
+                if c == 'a':
+                    tui.about()
+                    tui.print_buttons()
                     continue
             if dbg:
                 if dbg_run(dir, pool, tui, frq):

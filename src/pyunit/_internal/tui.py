@@ -15,6 +15,28 @@ from pathlib import Path
 from queue import Queue
 from threading import Thread
 
+about = """
+Copyright (c) 2022 Stephan Lukits.  All rights reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+"""
 
 if os.name == 'nt':
     import msvcrt
@@ -63,7 +85,12 @@ class TUI:
     TUI is an abstraction for the terminal output to provide for the
     watcher an api to report test runs.  It allows to replace the
     default test-io for testing and to add/exchange tui-libraries if
-    needed.
+    needed.  TUI also provides a non-blocking keyboard input at the
+    Queue self.inp, e.g.:
+        try:
+            char = self.inp.get()
+        except Empty:
+            pass
     """
 
     def __init__(self, out: TextIO = sys.stdout, inp: Queue|None=None):
@@ -190,3 +217,13 @@ class TUI:
                     self.write_line(f'{t}', 6)
                 for l in ll:
                     self.write_line(f'{l}', 8)
+
+    def about(self):
+        self.clear()
+        self._out.write(about[1:])
+
+    def print_buttons(self):
+        self.write_line()
+        self._out.write('[r]un all test modules   [a]bout   [q]uit')
+        self._out.flush()
+
