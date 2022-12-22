@@ -14,7 +14,7 @@ class FatalError(Exception):
 class T(object):
     """
     A T instance t provides means to communicate with the testing
-    framework (e.g. t.fatalIfNot) and to assert expected behavior (e.g.
+    framework (e.g. t.fatal_if_not) and to assert expected behavior (e.g.
     t.truthy).
     """
 
