@@ -332,7 +332,7 @@ class t:
 
     def matched_passes_if_given_str_is_matched_by_regex(self, t: T):
         def matched_passes_if_str_matched_by_regex(self, t: T) -> None:
-            if t.eq_str('42', '42'):
+            if t.matched('42', '42'):
                 self.matched_failed = False
         suite = fx.ReportMockSuite()
         suite.matched_passes = MethodType(
@@ -340,20 +340,77 @@ class t:
         testing.run(suite, self._config_dflt(suite))
         t.falsy(suite.matched_failed)
 
-    def space_matched_fails_if_given_str_is_not_matched_by_regex(self, t: T):
+    def space_matched_fails_if_given_str_is_not_matched_by_pattern(self, t: T):
         matched_str_fx = """<td>\n    .*42.*\n</td>"""
         def space_matched_fails_if_str_not_matched_by_ss(self, t: T) -> None:
-            if  not t.space_matched(matched_str_fx, 'not space matched',
-                    '<td>', '.*42', '</td>'):
+            if  not t.space_matched(matched_str_fx, '<td>', '.*42', '</td>', 
+                    log='not space matched'):
                 self.space_matched_failed = True
         suite = fx.ReportMockSuite()
         suite.space_matched_fails = MethodType(
             space_matched_fails_if_str_not_matched_by_ss, suite)
         testing.run(suite, self._config_dflt(suite))
-        t.in_("is not space-matched by", suite.reportIO.getvalue())
+        t.in_("is space-matched by", suite.reportIO.getvalue())
         t.in_('not space matched', suite.reportIO.getvalue())
         t.truthy(suite.space_matched_failed)
 
+    def space_matched_passes_if_given_str_is_matched_by_pattern(self, t: T):
+        matched_str_fx = """<td>\n    .*42.*\n</td>"""
+        def space_matched_passes_if_str_not_matched_by_ss(self, t: T) -> None:
+            if  t.space_matched(matched_str_fx, '<td>', '.*42.*', '</td>'):
+                self.space_matched_failed = False
+        suite = fx.ReportMockSuite()
+        suite.space_matched_fails = MethodType(
+            space_matched_passes_if_str_not_matched_by_ss, suite)
+        testing.run(suite, self._config_dflt(suite))
+        t.falsy(suite.space_matched_failed)
+
+    def star_matched_fails_if_given_str_is_not_matched_by_pattern(self, t: T):
+        matched_str_fx = """<td>\n    .*42.*\n</td>"""
+        def star_matched_fails_if_str_not_matched_by_ss(self, t: T) -> None:
+            if  not t.star_matched(matched_str_fx, 'td', '.*22.*', 'td', 
+                    log='not star matched'):
+                self.star_matched_failed = True
+        suite = fx.ReportMockSuite()
+        suite.star_matched_fails = MethodType(
+            star_matched_fails_if_str_not_matched_by_ss, suite)
+        testing.run(suite, self._config_dflt(suite))
+        t.in_("is star-matched by", suite.reportIO.getvalue())
+        t.in_('not star matched', suite.reportIO.getvalue())
+        t.truthy(suite.star_matched_failed)
+
+    def star_matched_passes_if_given_str_is_matched_by_pattern(self, t: T):
+        matched_str_fx = """<td>\n    .*42.*\n</td>"""
+        def star_matched_passes_if_str_matched_by_pattern(self, t: T) -> None:
+            if t.star_matched(matched_str_fx, 'td', '.*42.*', 'td'):
+                self.star_matched_failed = False
+        suite = fx.ReportMockSuite()
+        suite.star_matched_fails = MethodType(
+            star_matched_passes_if_str_matched_by_pattern, suite)
+        testing.run(suite, self._config_dflt(suite))
+        t.falsy(suite.star_matched_failed)
+
+    def not_matched_fails_if_given_str_is_matched_by_regex(self, t: T):
+        def not_matched_fails_if_str_matched_by_regex(self, t: T) -> None:
+            if not t.not_matched('42', '42', 0, 'matched'):
+                self.not_matched_failed = True
+        suite = fx.ReportMockSuite()
+        suite.matched_fails = MethodType(
+            not_matched_fails_if_str_matched_by_regex, suite)
+        testing.run(suite, self._config_dflt(suite))
+        t.in_("'42' is not matched by '42'", suite.reportIO.getvalue())
+        t.in_('matched', suite.reportIO.getvalue())
+        t.truthy(suite.not_matched_failed)
+
+    def not_matched_passes_if_given_str_is_not_matched_by_regex(self, t: T):
+        def not_matched_passes_if_str_not_matched_by_regex(self, t: T) -> None:
+            if t.not_matched('42', '22'):
+                self.not_matched_failed = False
+        suite = fx.ReportMockSuite()
+        suite.matched_passes = MethodType(
+            not_matched_passes_if_str_not_matched_by_regex, suite)
+        testing.run(suite, self._config_dflt(suite))
+        t.falsy(suite.not_matched_failed)
 
 
 if __name__ == '__main__':
