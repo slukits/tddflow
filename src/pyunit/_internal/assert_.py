@@ -77,7 +77,11 @@ class T(object):
             self.__log(msg)
         return False
 
-    def log(self, s: str): self.__log(s)
+    def log(self, s: Any): 
+        if isinstance(s, str):
+            self.__log(s)
+            return
+        self.__log(str(s))
 
     def falsy(self, value: bool, log: str = '') -> bool: 
         """
@@ -243,24 +247,61 @@ class T(object):
     def matched(
         self, s: str, pattern: str, flags: int = 0, log: str = ''
     ) -> bool:
+        """
+        matched fails calling test, logs log and returns False if given
+        string s is not matched by given pattern; otherwise True is
+        returned.
+        """
         if re.match(pattern, s, flags) is not None:
             return True
         self._fail_cmp(s, pattern, 'is matched by', log)
         return False
 
-    def space_matched(self, s: str, log: str = '', *pattern) -> bool:
-        ptt = '\\s*'.join([re.escape(s) for s in pattern])
-        ptt = ptt or '\s*'
+    def space_matched(self, s: str, *ss: str, log: str = '') -> bool:
+        """
+        space_matched fails calling test, logs log and returns False if
+        given string s is not matched by the pattern calculated from
+        strings ss; otherwise True is returned.  Note all regex special
+        characters in each string s' in ss are escaped before they are
+        joined together with \s* as separator. e.g. let s be
+        <td>
+            42
+        </td>
+        then t.space_matched(s, '<td>', '42', '</td>') evaluates to True.
+        """
+        ptt = '\s*' + '\\s*'.join([re.escape(s) for s in ss]) + '\s*'
         if re.match(ptt, s) is not None:
             return True
-        self._fail_cmp(s, ptt, 'is not space-matched by', log)
+        self._fail_cmp(s, ptt, 'is space-matched by', log)
         return False
 
-    def star_matched(self, s: str, log: str = '', *pattern) -> bool:
-        ptt = '.*?'.join([re.escape(s) for s in pattern])
-        ptt = ptt or '.*'
-        if re.match(ptt, s) is not None:
+    def star_matched(self, s: str, *ss: str, log: str = '') -> bool:
+        """
+        star_matched fails calling test, logs log and returns False if
+        given string s is not matched by the pattern calculated from
+        strings ss; otherwise True is returned.  Note all regex special
+        character in each string s' in ss are escaped before they are
+        joined together with .* as separator. e.g. let s be
+        <td>
+            42
+        </td>
+        then t.star_matched(s, 'td', '42', 'td') evaluates to True.
+        """
+        ptt = '.*' + '.*'.join([re.escape(s) for s in ss]) + '.*'
+        if re.match(ptt, s, re.DOTALL) is not None:
             return True
-        self._fail_cmp(s, ptt, 'is not star-matched by', log)
+        self._fail_cmp(s, ptt, 'is star-matched by', log)
         return False
 
+    def not_matched(
+        self, s: str, pattern: str, flags: int = 0, log: str = ''
+    ) -> bool:
+        """
+        not_matched fails calling test, logs log and returns False if
+        given string s is matched by given pattern; otherwise True is
+        returned.
+        """
+        if re.match(pattern, s, flags) is None:
+            return True
+        self._fail_cmp(s, pattern, 'is not matched by', log)
+        return False

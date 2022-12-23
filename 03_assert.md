@@ -22,13 +22,13 @@ most of the time.  To be more expressive a few more specific assertion
 should be added:
 
 - falsy(bool[, str]) fails a test iff given bool is truthy
-- in(Any, Iterable[Any][, str]) Note an [argument] argument is 
+- in_(Any, Iterable[Any][, str]) Note an [argument] argument is 
   optional while collection[type-info] specifies a collection's
   element's type.  *in* fails the test if given element is not in
   given iterable.
 - not_in(Any, Iterable[Any][, str]) fails the test if given element
   is in given iterable.
-- is(Any, Any) fails the test if given arguments don't have the same id
+- is_(Any, Any) fails the test if given arguments don't have the same id
 - is_not(Any, Any) fails the test if given arguments have the same id
 - is_instance(Any, Any) fails the test if first argument is not an
   instance of second
@@ -54,10 +54,6 @@ should be added:
   variadic string is escaped before joining them together. 
 - not_matched(str|bytes, Pattern) fails the test if
   matched(str|bytes, Patter)
-- not_space_matched(str|bytes, ...str) fails the test if
-  space_matched(str|bytes, ...str)
-- not_star_matched(str|bytes, ...str) fails the test if
-  start_matched(str|bytes, ...str)
 
 Note the idea for space and star match assertions is to make tests less
 brittle if only structural aspects should be asserted, e.g. given string s
@@ -74,5 +70,8 @@ would pass the assertion
 
     t.star_matched(s, 'tr', 'td', '42', 'td', 'tr')
 
-From my experience these assertions cover the common use-cases
+From my experience the above assertions cover the common use-cases
 and allow for more useful failure messages.
+
+Last but not least the handling of special methods like setup and
+tear_down [is implemented](04_special.md).
