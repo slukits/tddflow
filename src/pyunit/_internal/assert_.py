@@ -4,7 +4,8 @@
 # Use of this source code is governed by a MIT-style
 # license that can be found in the LICENSE file.
 
-from typing import Callable, Any, Type, Optional
+from typing import Callable, Any, Type, Optional, Iterable
+import re
 
 
 class FatalError(Exception):
@@ -31,7 +32,7 @@ class T(object):
         if log:
             self.__log(log)
 
-    def truthy(self, value: Any, log: str = "") -> bool:
+    def truthy(self, value: Any, log: str = '') -> bool:
         """
         truthy fails calling test if given value is not truthy and
         returns False; otherwise True is returned
@@ -77,3 +78,189 @@ class T(object):
         return False
 
     def log(self, s: str): self.__log(s)
+
+    def falsy(self, value: bool, log: str = '') -> bool: 
+        """
+        falsy fails calling test, logs log and returns False if given
+        value is not falsy; otherwise True is returned.
+        """
+        if not value:
+            return True
+        self.failed(f'expected \'{value}\' to be falsy')
+        if len(log):
+            self.__log(log)
+        return False
+
+    def _fail_cmp(self, v1: Any, v2: Any, msg: str, log: str) -> None:
+        """_fail_cmp fails the comparison of two values."""
+        sv1, sv2 = repr(v1).strip('"\''), repr(v2).strip('"\'')
+        self.failed(f"expected '{sv1}' {msg} '{sv2}'")
+        if len(log):
+            self.__log(log)
+
+    def in_(self, value: Any, itr: Iterable[Any], log: str = '') -> bool:
+        """
+        in_ fails calling test, logs log and returns False if given
+        value is not in given iterable itr; otherwise True is returned.
+        """
+        if value in itr:
+            return True
+        self._fail_cmp(value, itr, 'in', log)
+        return False
+
+    def not_in(self, value: Any, itr: Iterable[Any], log: str = '') -> bool:
+        """
+        not_in fails calling test, logs log and returns False if given
+        value is in given iterable itr; otherwise True is returned.
+        """
+        if value not in itr:
+            return True
+        self._fail_cmp(value, itr, 'not in', log)
+        return False
+
+    def is_(self, value: Any, other: Any, log: str='') -> bool:
+        """
+        is_ fails calling test, logs log and return False if given value
+        is not identical to other value; otherwise True is returned.
+        """
+        if value is other:
+            return True  # TODO: uncommenting this line crashes watcher
+        self._fail_cmp(value, other, 'is', log)
+        return False
+
+    def is_not(self, value: Any, other: Any, log: str='') -> bool:
+        """
+        is_not fails calling test, logs log and return False if given
+        value is identical with other value; otherwise True is returned.
+        """
+        if value is not other:
+            return True
+        self._fail_cmp(value, other, 'is not', log)
+        return False
+
+    def is_instance(self, value: Any, type_: Any, log: str='')-> bool:
+        """
+        is_instance fails calling test, logs log and returns False if
+        given value is not an instance of given type; otherwise True is
+        returned.
+        """
+        if isinstance(value, type_):
+            return True
+        self._fail_cmp(value, type_, 'is instance of', log)
+        return False
+
+    def is_not_instance(self, value: Any, type_: Any, log: str='')-> bool:
+        """
+        is_not_instance fails calling test, logs log and returns False
+        if given value is an instance of given type; otherwise True is
+        returned.
+        """
+        if not isinstance(value, type_):
+            return True
+        self._fail_cmp(value, type_, 'is not instance of', log)
+        return False
+
+    def eq(self, value: Any, other: Any, log: str = '') -> bool:
+        """
+        eq fails calling test, logs log and returns False if given value
+        is not equal to other; otherwise True is returned.
+        """
+        if value == other:
+            return True
+        self._fail_cmp(value, other, '==', log)
+        return False
+
+    def not_eq(self, value: Any, other: Any, log: str = '') -> bool:
+        """
+        not_eq fails calling test, logs log and returns False if given
+        value is equal to other; otherwise True is returned.
+        """
+        if value != other:
+            return True
+        self._fail_cmp(value, other, '!=', log)
+        return False
+
+    def eq_str(self, value: Any, other: Any, log: str = '') -> bool:
+        """
+        eq_str fails calling test, logs log and returns False if given
+        value's string representation is not equal to other's; otherwise
+        True is returned.
+        """
+        if str(value) == str(other):
+            return True
+        self._fail_cmp(
+            str(value),
+            str(other),
+            '==', log
+        )
+        return False
+
+    def not_eq_str(self, value: Any, other: Any, log: str = '') -> bool:
+        """
+        not_eq_str fails calling test, logs log and returns False if
+        given value's string representation is equal to other's;
+        otherwise True is returned.
+        """
+        if str(value) != str(other):
+            return True
+        self._fail_cmp(
+            str(value).strip('"'),
+            str(other).strip('"'),
+            '!=', log
+        )
+        return False
+
+    def eq_repr(self, value: Any, other: Any, log: str = '') -> bool:
+        """
+        eq_repr fails calling test, logs log and returns False if given
+        value's canonical string representation is not equal to other's;
+        otherwise True is returned.
+        """
+        if repr(value) == repr(other):
+            return True
+        self._fail_cmp(
+            repr(value).strip('"'),
+            repr(other).strip('"'),
+            '==', log
+        )
+        return False
+
+    def not_eq_repr(self, value: Any, other: Any, log: str = '') -> bool:
+        """
+        not_eq_repr fails calling test, logs log and returns False if
+        given value's canonical string representation is equal to
+        other's; otherwise True is returned.
+        """
+        if repr(value) != repr(other):
+            return True
+        self._fail_cmp(
+            repr(value).strip('"'),
+            repr(other).strip('"'),
+            '!=', log
+        )
+        return False
+
+    def matched(
+        self, s: str, pattern: str, flags: int = 0, log: str = ''
+    ) -> bool:
+        if re.match(pattern, s, flags) is not None:
+            return True
+        self._fail_cmp(s, pattern, 'is matched by', log)
+        return False
+
+    def space_matched(self, s: str, log: str = '', *pattern) -> bool:
+        ptt = '\\s*'.join([re.escape(s) for s in pattern])
+        ptt = ptt or '\s*'
+        if re.match(ptt, s) is not None:
+            return True
+        self._fail_cmp(s, ptt, 'is not space-matched by', log)
+        return False
+
+    def star_matched(self, s: str, log: str = '', *pattern) -> bool:
+        ptt = '.*?'.join([re.escape(s) for s in pattern])
+        ptt = ptt or '.*'
+        if re.match(ptt, s) is not None:
+            return True
+        self._fail_cmp(s, ptt, 'is not star-matched by', log)
+        return False
+

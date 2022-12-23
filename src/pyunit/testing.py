@@ -43,9 +43,8 @@ def run(suite: Any, config: Config | None = None):
     s = suite if not isinstance(suite, type) else suite()
     config = config or Config()
     
-
-    report = (reporting.TDD() if _REPORT_JSON in _sys.argv else
-        config.reporter or reporting.Default())
+    report = config.reporter or (reporting.TDD() 
+        if _REPORT_JSON in _sys.argv else reporting.Default())
     def counter(): return None
     try:
         counter = report.increase_test_count  # type: ignore

@@ -28,6 +28,12 @@ should be added:
   given iterable.
 - not_in(Any, Iterable[Any][, str]) fails the test if given element
   is in given iterable.
+- is(Any, Any) fails the test if given arguments don't have the same id
+- is_not(Any, Any) fails the test if given arguments have the same id
+- is_instance(Any, Any) fails the test if first argument is not an
+  instance of second
+- is_not_instance(Any, Any) fails the test if given first argument is an
+  instance of second
 - eq(Any, Any) fails the test if given arguments are not equal (!=).
 - eq_str(Any, Any) fails the test if given arguments have not the
   same string representation.

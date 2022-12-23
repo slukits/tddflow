@@ -153,10 +153,25 @@ class TUI:
         parsed = []  # type: list[Any]
         tests_count, fails_count = 0, 0
         if len(ss):
-            for jsn in [json.loads(s) for s in ss]:
-                tests_count += jsn[JSN_TESTS_COUNT]
-                fails_count += jsn[JSN_FAILS_COUNT]
-                parsed.append(jsn)
+            for s in ss:
+                try:
+                    jsn = json.loads(s)
+                except json.JSONDecodeError as e:
+                    tests_count += 1
+                    fails_count += 1
+                    parsed.append({
+                        JSN_TEST_SUITE: 'internal error',
+                        JSN_FAILS: ['json_decoding_error'],
+                        JSN_TEST_LOGS: {'json_decoding_error': [
+                            str(e), s]},
+                        JSN_TESTS_COUNT: 0,
+                        JSN_FAILS_COUNT: 1
+                    })
+                else:
+                    tests_count += jsn[JSN_TESTS_COUNT]
+                    fails_count += jsn[JSN_FAILS_COUNT]
+                    parsed.append(jsn)
+            
         summary = (f'pyunit: watcher: run {tests_count} tests of ' +
                    f'witch {fails_count} failed in {elapsed}s')
         if fails_count or failed:
@@ -215,8 +230,14 @@ class TUI:
                     self.write_line(self.failed(f'{t}'), 6)
                 else:
                     self.write_line(f'{t}', 6)
-                for l in ll:
-                    self.write_line(f'{l}', 8)
+                for LL in ll:
+                    first = True
+                    for L in LL.split("\n"):
+                        if first:
+                            first = False
+                            self.write_line(f'{L}', 8)
+                            continue
+                        self.write_line(f'{L}', 10)
 
     def about(self):
         self.clear()
