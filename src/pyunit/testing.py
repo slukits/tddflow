@@ -5,7 +5,8 @@
 # license that can be found in the LICENSE file.
 
 import traceback
-from typing import TextIO as _TextIO, Any, Callable, Tuple
+from typing import (TextIO as _TextIO, Any as _Any, 
+    Callable as _Callable, Tuple as _Tuple)
 from dataclasses import dataclass as _dataclass
 import sys as _sys
 
@@ -26,7 +27,7 @@ class Config:
     single: str = ""
 
 
-def run(suite: Any, config: Config | None = None):
+def run(suite: _Any, config: Config | None = None):
     """
     run executes *every* callable c (i.e also static or class methods) of
     given suite iff c is non-special and non-dunder.  Each call gets a T
@@ -79,7 +80,7 @@ def run(suite: Any, config: Config | None = None):
 def _run_init(
     ss: '_Specials', 
     report: reporting.Report,
-    s: Any,
+    s: _Any,
     config: Config
 ) -> bool:
     if ss.init is None:
@@ -143,10 +144,10 @@ def _run_finalize(ss: '_Specials', report: reporting.Report):
 
 
 def _run_single_test(
-    suite: Any,
+    suite: _Any,
     report: reporting.Report,
     config: Config,
-    counter: Callable
+    counter: _Callable
 ):
     tt, ss = _suite_methods(suite)
     if not _run_init(ss, report, suite, config):
@@ -173,13 +174,13 @@ def _run_single_test(
 
 @_dataclass
 class _Specials:
-    init: Callable[[T], None] | None
-    setup: Callable[[T], None] | None
-    tear_down: Callable[[T], None] | None
-    finalize: Callable[[T], None] | None
+    init: _Callable[[T], None] | None
+    setup: _Callable[[T], None] | None
+    tear_down: _Callable[[T], None] | None
+    finalize: _Callable[[T], None] | None
 
 
-def _suite_methods(suite) -> Tuple[list[str], _Specials]:
+def _suite_methods(suite) -> _Tuple[list[str], _Specials]:
     tt, ss = [], _Specials(None, None, None, None)
     for m in dir(suite):
         if not callable(getattr(suite, m, None)) or m.startswith('_'):

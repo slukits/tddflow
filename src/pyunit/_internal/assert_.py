@@ -5,6 +5,7 @@
 # license that can be found in the LICENSE file.
 
 from typing import Callable, Any, Type, Optional, Iterable
+from inspect import getframeinfo, stack
 import re
 
 
@@ -23,12 +24,14 @@ class T(object):
         self.__fail = fail
         self.__log = log
 
-    def failed(self, log: Any):
+    def failed(self, log: Any, caller: int = 2):
         """
         failed flags a test as failed with given log message and
         continues it's execution.
         """
         self.__fail()
+        cllr = getframeinfo(stack()[caller][0])
+        self.__log(f'File "{cllr.filename}", line {cllr.lineno}')
         if log:
             self.__log(log)
 
@@ -95,7 +98,7 @@ class T(object):
     def _fail_cmp(self, v1: Any, v2: Any, msg: str, log: str) -> None:
         """_fail_cmp fails the comparison of two values."""
         sv1, sv2 = repr(v1).strip('"\''), repr(v2).strip('"\'')
-        self.failed(f"expected '{sv1}' {msg} '{sv2}'")
+        self.failed(f"expected '{sv1}' {msg} '{sv2}'", 3)
         if len(log):
             self.__log(log)
 

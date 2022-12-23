@@ -70,8 +70,8 @@ class TDDReport:
         testing.run(suite, self._config(suite.reportIO))
         report = json.loads(suite.reportIO.getvalue())
         t.fatal_if_not(t.truthy(JSN_TEST_LOGS in report))
-        t.truthy(report[JSN_TEST_LOGS]['failing_test']
-                 == ["expected 'False' to be truthy"])
+        t.truthy("expected 'False' to be truthy"
+            in report[JSN_TEST_LOGS]['failing_test'])
 
     def provides_a_logging_test_s_log_message(self, t: testing.T):
         suite = fx.TDDReport()
