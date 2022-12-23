@@ -66,6 +66,8 @@ Now we have a minimal implementation of a testing framework which can be
 used for further tests of pyunit.
 """
 
+import os
+
 from testmocks import Out
 import testfixtures as fx
 from testcontext import testing
@@ -164,6 +166,15 @@ class Runner:
         testing.run(suite, self._config_dflt(suite))
         got = suite.reportIO.getvalue()
         t.in_(fx.SPC_FINALIZE_FAILED, got)
+
+    def reports_failing_assertion_s_file_and_line_number(self, t: T):
+        suite = fx.FailingTestFileLine()
+        testing.run(suite, self._config_dflt(suite))
+        got = suite.reportIO.getvalue()
+        t.in_('Line 178', got)
+        file = os.path.abspath(os.path.join(
+            os.path.dirname(__file__), 'testfixtures.py'))        
+        t.in_(file, got)
 
 
 if __name__ == "__main__":

@@ -69,7 +69,7 @@ class Report:
         if isinstance(msg, str):
             t.logs.append(msg)
         else:
-            t.logs.append(str(msg))
+            t.logs.append(str(msg).strip('\\\'"'))
 
 
 class Default(Report):
@@ -118,7 +118,7 @@ class TDD(Report):
             log = '    "{}": [\n      {}\n    ]'.format(
                 name,
                 ",\n      ".join(
-                    '"{}"'.format(L.replace('"', '\\"')) 
+                    '"{}"'.format(L.replace('"', '\\"'))
                         for L in [L for _LL in LL for L in _LL])
             )
             logs.append(log)

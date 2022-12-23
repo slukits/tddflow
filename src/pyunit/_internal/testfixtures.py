@@ -166,3 +166,13 @@ class SpecialFinalizeFails(ReportMockSuite):
     """
 
     def finalize(self, t: T): raise Exception(SPC_FINALIZE_FAILED)
+
+
+class FailingTestFileLine(ReportMockSuite):
+    """
+    FailingTestFileLine tests if the fail message of a failing assertion
+    provides the file and line number of the failing test assertion.
+    """
+
+    def failing_test(self, t: T):
+        t.truthy(False)

@@ -31,7 +31,7 @@ class T(object):
         """
         self.__fail()
         cllr = getframeinfo(stack()[caller][0])
-        self.__log(f'File "{cllr.filename}", line {cllr.lineno}')
+        self.__log(f'File "{cllr.filename}", Line {cllr.lineno}')
         if log:
             self.__log(log)
 
@@ -42,7 +42,7 @@ class T(object):
         """
         if value:
             return True
-        self.failed(f'expected \'{value}\' to be truthy')
+        self.failed(f"expected '{value}' to be truthy")
         if len(log):
             self.__log(log)
         return False
@@ -90,7 +90,7 @@ class T(object):
         """
         if not value:
             return True
-        self.failed(f'expected \'{value}\' to be falsy')
+        self.failed(f"expected '{value}' to be falsy")
         if len(log):
             self.__log(log)
         return False
