@@ -12,7 +12,7 @@ Use testing.Config to define which report should be used.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, TextIO
+from typing import Dict, TextIO, Any
 
 JSN_TEST_SUITE = "test_suite"
 JSN_TESTS_COUNT = "tests_count"
@@ -60,13 +60,16 @@ class Report:
         t.failed = True
         self.fails_count += 1
 
-    def log(self, name: str, msg: str):
+    def log(self, name: str, msg: Any):
         """log given message msg for test with given name."""
         t = self.tests.get(name, None)
         if t is None:
             t = TestAttributes()
             self.tests[name] = t
-        t.logs.append(msg)
+        if isinstance(msg, str):
+            t.logs.append(msg)
+        else:
+            t.logs.append(str(msg))
 
 
 class Default(Report):

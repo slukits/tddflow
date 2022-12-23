@@ -69,6 +69,8 @@ used for further tests of pyunit.
 from testmocks import Out
 import testfixtures as fx
 from testcontext import testing
+from assert_ import T
+from reporting import Default
 
 
 class TestTestRun:
@@ -86,7 +88,7 @@ class TestTestingTInstance:
         super().__init__()
         self.gotTestingTInstance = False
 
-    def got_testing_T_instance(self, t: testing.T):
+    def got_testing_T_instance(self, t: T):
         self.gotTestingTInstance = isinstance(t, testing.T)
 
 
@@ -103,21 +105,65 @@ class TestTrueAssertion:
         if 'passes_if_true' in s:
             self.passedTrueAssertion = True
 
-    def fails_if_false(self, t: testing.T):
+    def fails_if_false(self, t: T):
         t.truthy(False)
 
-    def passes_if_true(self, t: testing.T):
+    def passes_if_true(self, t: T):
         t.truthy(True)
 
 
 class Runner:
 
-    def executes_given_single_test(self, t: testing.T):
+    def executes_given_single_test(self, t: T):
         suite = fx.RunSingle()
         testing.run(suite, testing.Config(
             out=suite.reportIO, single='single_test'))
         t.truthy(suite.single_executed)
         t.truthy(not suite.other_executed)
+
+    def _config_dflt(self, suite: object) -> testing.Config:
+        return testing.Config(out=suite.reportIO, reporter=Default())
+
+    def executes_special_methods_at_the_right_time(self, t: T):
+        suite = fx.SpecialMethods()
+        testing.run(suite, self._config_dflt(suite))
+        t.star_matched(
+            suite.reportIO.getvalue(),
+            fx.SPC_INIT, fx.SPC_SETUP, fx.SPC_ONE, fx.SPC_TEAR_DOWN,
+            fx.SPC_SETUP, fx.SPC_TWO, fx.SPC_TEAR_DOWN, fx.SPC_FINALIZE
+        )
+    
+    def executes_nothing_more_if_init_fails(self, t: T):
+        suite = fx.SpecialInitFails()
+        testing.run(suite, self._config_dflt(suite))
+        got = suite.reportIO.getvalue()
+        t.in_(fx.SPC_INIT_FAILED, got)
+        t.not_in(fx.SPC_SETUP, got)
+        t.not_in(fx.SPC_ONE, got)
+        t.not_in(fx.SPC_TEAR_DOWN, got)
+        t.not_in(fx.SPC_FINALIZE, got)
+
+    def doesnt_execute_test_but_tear_down_if_setup_failed(self, t: T):
+        suite = fx.SpecialSetupFails()
+        testing.run(suite, self._config_dflt(suite))
+        got = suite.reportIO.getvalue()
+        t.in_(fx.SPC_INIT, got)
+        t.in_(fx.SPC_SETUP_FAILED, got)
+        t.not_in(fx.SPC_ONE, got)
+        t.in_(fx.SPC_TEAR_DOWN, got)
+        t.in_(fx.SPC_FINALIZE, got)
+
+    def reports_failing_tear_down(self, t: T):
+        suite = fx.SpecialTearDownFails()
+        testing.run(suite, self._config_dflt(suite))
+        got = suite.reportIO.getvalue()
+        t.in_(fx.SPC_TEAR_DOWN_FAILED, got)
+
+    def reports_failing_finalize(self, t: T):
+        suite = fx.SpecialFinalizeFails()
+        testing.run(suite, self._config_dflt(suite))
+        got = suite.reportIO.getvalue()
+        t.in_(fx.SPC_FINALIZE_FAILED, got)
 
 
 if __name__ == "__main__":

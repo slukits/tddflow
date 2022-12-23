@@ -19,11 +19,11 @@ class T(object):
     t.truthy).
     """
 
-    def __init__(self, fail: Callable, log: Callable[[str], None]):
+    def __init__(self, fail: Callable, log: Callable[[Any], None]) -> None:
         self.__fail = fail
         self.__log = log
 
-    def failed(self, log: str):
+    def failed(self, log: Any):
         """
         failed flags a test as failed with given log message and
         continues it's execution.
@@ -78,10 +78,7 @@ class T(object):
         return False
 
     def log(self, s: Any): 
-        if isinstance(s, str):
-            self.__log(s)
-            return
-        self.__log(str(s))
+        self.__log(s)
 
     def falsy(self, value: bool, log: str = '') -> bool: 
         """
