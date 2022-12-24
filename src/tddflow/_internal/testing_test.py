@@ -5,8 +5,8 @@
 # license that can be found in the LICENSE file.
 
 """
-Module suite_test provides the tests for pyunit's behavior.  To use
-pyunit in production we need at least three features: A suite runner
+Module suite_test provides the tests for tddflow's behavior.  To use
+tddflow in production we need at least three features: A suite runner
 executes (1) all test-methods of a test suite, and a failed assertion
 fails (2) a test which is then reported (3) as having failed.  To test
 these features python's built in doctest feature is used.
@@ -63,7 +63,7 @@ False
 >>> s.reportIO.close()
 
 Now we have a minimal implementation of a testing framework which can be
-used for further tests of pyunit.
+used for further tests of tddflow.
 """
 
 import os

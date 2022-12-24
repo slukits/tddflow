@@ -5,24 +5,24 @@
 # license that can be found in the LICENSE file.
 
 """
-pyunit is a lightweight testing framework for a TDD workflow.  It has
+tddflow is a lightweight testing framework for a TDD workflow.  It has
 also the capability to watch a python package and it's sub-packages for
 modifications automatically rerunning tests of a modified test-module or
 of test modules importing a modified production module.
 
 Usage for watching:
 
-    python -m pyunit
+    python -m tddflow
 
 See
 
-    python -m pyunit help
+    python -m tddflow help
 
 for information about its command line arguments.
 
 Usage for testing:
 
-    from pyunit.testing import run, T
+    from tddflow.testing import run, T
 
     class TestedSubject:
 
@@ -52,7 +52,7 @@ Usage for testing:
     if __name__ == '__main__':
         run(TestedSubject)
 
-See also pyunit.testing.Config for how to configure a tests-suite run.
+See also tddflow.testing.Config for how to configure a tests-suite run.
 
 HAPPY TESTING
 """

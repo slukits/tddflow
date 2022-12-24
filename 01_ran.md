@@ -32,7 +32,7 @@ True
 
 A suite test is executed on a (suite) test run:
 
->>> from pyunit import runTests
+>>> from tddflow import runTests
 >>> s = TestSuite()
 >>> s.suiteTestHasRun
 False
@@ -49,7 +49,7 @@ False
 >>> s.gotTestingTInstance
 True
 """
-from pyunit import runTests, T
+from tddflow import runTests, T
 
 
 class TestSuite:
@@ -84,7 +84,7 @@ feature will be leveraged to validate if a test run behaved expectedly.
 """
 A suite test fails if true assertion fails:
 
->>> from pyunit import runTests, Config
+>>> from tddflow import runTests, Config
 >>> s = TestTrueAssertion()
 >>> s.failedTrueAssertion
 False
@@ -109,7 +109,7 @@ False
 
 import io
 
-from pyunit import T
+from tddflow import T
 
 
 class OutMock(io.StringIO):

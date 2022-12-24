@@ -7,11 +7,11 @@
 import os
 import sys
 
-pyunit_root = os.path.abspath(
+tddflow_root = os.path.abspath(
     os.path.join(os.path.dirname(__file__), '../..'))
 
-if pyunit_root not in sys.path:
-    sys.path.insert(0, pyunit_root)
+if tddflow_root not in sys.path:
+    sys.path.insert(0, tddflow_root)
 
-from pyunit import testing
+from tddflow import testing
 _ = testing

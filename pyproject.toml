@@ -3,8 +3,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "pyunit"
-version = "0.9.0"
+name = "tddflow"
+version = "0.9.1"
 authors = [
   { name="Stephan Lukits", email="stephan.lukits@gmail.com" },
 ]
@@ -18,5 +18,5 @@ classifiers = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/slukits/pyunit"
-"Bug Tracker" = "https://github.com/slukits/pyunit/issues"
+"Homepage" = "https://github.com/slukits/tddflow"
+"Bug Tracker" = "https://github.com/slukits/tddflow/issues"

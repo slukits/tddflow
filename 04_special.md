@@ -1,6 +1,6 @@
 # Special Methods of Test Suites
 
-The following test-methods should be treated special by pyunit:
+The following test-methods should be treated special by tddflow:
 
 - *init* is executed before any other suite method is executed.
 - *setup* is executed before each test

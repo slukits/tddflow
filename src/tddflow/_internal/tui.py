@@ -57,7 +57,7 @@ def non_blocking_kb(q: Queue):
         time.sleep(0.2)
 
 
-from pyunit._internal.reporting import (
+from tddflow._internal.reporting import (
     JSN_TESTS_COUNT, JSN_FAILS_COUNT, JSN_TEST_SUITE, JSN_FAILS,
     JSN_TEST_LOGS)
 
@@ -172,7 +172,7 @@ class TUI:
                     fails_count += jsn[JSN_FAILS_COUNT]
                     parsed.append(jsn)
             
-        summary = (f'pyunit: watcher: run {tests_count} tests of ' +
+        summary = (f'tddflow: watcher: run {tests_count} tests of ' +
                    f'witch {fails_count} failed in {elapsed}s')
         if fails_count or failed:
             self.write_line(self.failed(summary))

@@ -8,16 +8,16 @@
 help = """
 NAME
 
-pyunit - a simple lightweight testing framework that can used as command
+tddflow - a simple lightweight testing framework that can used as command
          watch a directory for modifications and run related tests
          automatically.
 
 SYNOPSIS
-    pyunit [--dbg] [--ignore-pkg] [--ignore-mdl] [--frequency]
+    tddflow [--dbg] [--ignore-pkg] [--ignore-mdl] [--frequency]
            [--run-timeout] [--map]
 
 DESCRIPTION
-    pyunit as a command watches test-modules and production-modules in
+    tddflow as a command watches test-modules and production-modules in
     the directory it was started and nested packages for modifications.
     If a test-module is modified it is executed.  Is a production module
     modified all test modules which can be mapped to this module due to
@@ -26,33 +26,33 @@ DESCRIPTION
     many of those have failed.  Failed tests and logging tests are
     reported verbosely with their loggings.
 
-    The typical use cases of pyunit are:
-        - write a failing test, i.e. pyunit shows you the red bar, make
+    The typical use cases of tddflow are:
+        - write a failing test, i.e. tddflow shows you the red bar, make
           the test "green", refactor and write a failing test again ...
         - if one quickly wants to examine a return/variable value it can
-          be logged in a test and pyunit will report the logged value.
+          be logged in a test and tddflow will report the logged value.
 
 COMMAND LINE OPTIONS
-    --dbg    pyunit runs all tests-modules it thinks it should
+    --dbg    tddflow runs all tests-modules it thinks it should
              run and reports test-modules which were modified and test
              modules which were triggered by an production module
              modification.  I.e. one can check which tests are run at
              which module-modification.
 
     --ignore-pkg=dirname
-            takes a directory name and pyunit will ignore all packages
+            takes a directory name and tddflow will ignore all packages
             having this directory name (Note paths are not handled).
 
     --ignore-mdl=module.py 
-            takes a file name and pyunit will ignore modules with given
+            takes a file name and tddflow will ignore modules with given
             file name (Note paths are not handled).
 
     --frequency=0.3 
-            takes a float determining the frequency with which pyunit
+            takes a float determining the frequency with which tddflow
             checks the watched directory.
 
     --run-timeout=20.0
-            takes a float determining for how long pyunit waits for a
+            takes a float determining for how long tddflow waits for a
             test module to execute before a timeout is reported.
 
     --map='production/module.py->tests/test_module.py'
@@ -72,7 +72,7 @@ import os
 import sys
 from multiprocessing import Queue
 
-from pyunit._internal.watcher import Dir, watcher, DirNoPackage
+from tddflow._internal.watcher import Dir, watcher, DirNoPackage
 
 def quitClosure(q: Queue) -> Callable[[Any, Any], None]:
     return lambda sig, frame: q.put(True)

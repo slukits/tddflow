@@ -39,7 +39,7 @@ if __name__ == '__main__':
 ... could become:
 
 ```py
-from pyunit import run, T
+from tddflow import run, T
 
 class AString: 
 
@@ -72,11 +72,11 @@ for inheritance, no need for uppercase methods, no need for "marking"
 tests; i.e. noise through repetition is down to a minimum while our IDE
 will still offer us the T-API because of the type hinting.
 
-To make this little exercise (more) useful we want to add also a pyunit
+To make this little exercise (more) useful we want to add also a tddflow
 command
 
 ```
-    python -m pyunit
+    python -m tddflow
 ```
 
 which should watch the modules of the package it was executed in
@@ -97,5 +97,5 @@ my experience.
 Kent Beck writes in "Test-Driven Development By Example": "Driving a
 testing tool using the testing tool itself to run the tests may seem a
 bit like performing brain surgery on yourself." Doesn't that sound like
-fun?  [Tag along](https://github.com/slukits/pyunit/blob/main/01_ran.md)
+fun?  [Tag along](https://github.com/slukits/tddflow/blob/main/01_ran.md)
 if you feel like it.

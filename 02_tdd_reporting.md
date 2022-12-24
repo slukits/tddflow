@@ -49,7 +49,7 @@ Having all this information available we can build the watcher
         * shows first logging test's log data if green
         * runs test modules concurrently
 
-See report_test.py, pyunit_test.py and watcher_test.py for a test drive
+See report_test.py, tddflow_test.py and watcher_test.py for a test drive
 implementation of the above.  Note the above is a sketch of a first
 thought process of the next step.  When it comes to the implementation
 it might be that points which appear later are easier to implement then
@@ -76,7 +76,7 @@ turned out that we need a non blocking keyboard input and that SIGINT
 should be handled in order to gracefully shout down and to provide a
 little menu.  Note along the way the package file structure was
 refactored to suite pip's packaging mechanism in order to publish
-pyunit.
+tddflow.
 
 Since we can execute tests and figure which test modules to run it's
 time for more [assertions](03_assert.md).

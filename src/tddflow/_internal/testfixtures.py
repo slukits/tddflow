@@ -4,7 +4,7 @@
 # Use of this source code is governed by a MIT-style
 # license that can be found in the LICENSE file.
 
-# pyunit fixtures contains test suites used as fixtures for test.
+# tddflow fixtures contains test suites used as fixtures for test.
 
 import testmocks as mck
 from testcontext import testing

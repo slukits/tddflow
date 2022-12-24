@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-# runs all pyunit test with default reporter, i.e. has no output iff all
+# runs all tddflow test with default reporter, i.e. has no output iff all
 # tests pass.
 
 for t in *_test.py; do

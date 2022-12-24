@@ -5,10 +5,10 @@
 # license that can be found in the LICENSE file.
 
 """
-testing is the entry point for pyunit's features for implementing test
+testing is the entry point for tddflow's features for implementing test
 suites.  The typical use case is
 
-    from pyunit.testing import run, T
+    from tddflow.testing import run, T
 
 to implement a test suite:
 
@@ -44,7 +44,7 @@ and to run the implemented test suite:
 
 For an enhanced usage you can also
 
-    from pyunit.testing import Config, reporting
+    from tddflow.testing import Config, reporting
 
 whereas Config lets you configure the test run if you for example
 want to run only a single test:
@@ -65,9 +65,9 @@ from typing import (TextIO as _TextIO, Any as _Any,
 from dataclasses import dataclass as _dataclass
 import sys as _sys
 
-from pyunit._internal.assert_ import T, FatalError as _FatalError
-from pyunit._internal import reporting
-from pyunit._internal.watcher import REPORT_ARG as _REPORT_JSON
+from tddflow._internal.assert_ import T, FatalError as _FatalError
+from tddflow._internal import reporting
+from tddflow._internal.watcher import REPORT_ARG as _REPORT_JSON
 
 
 _SPECIAL = { 'init', 'setup', 'tear_down', 'finalize' }  # type: set
@@ -99,19 +99,19 @@ def run(suite: _Any, config: Config | None = None):
 
         class TestedSubject:
 
-            def expected_behavior(self, t: pyunit.T):
+            def expected_behavior(self, t: tddflow.T):
                 t.breakIfNot(t.truthy(True))
 
 
         if __name__ == '__main__':
-            pyunit.run(TestedSubject)
+            tddflow.run(TestedSubject)
 
     Note instead of the test suite also a string may be given which is
     used as regular expression to match against class-names of executed
     test module, e.g.
 
         if __name__ == '__main__':
-            pyunit.run('Tested.*')
+            tddflow.run('Tested.*')
     """
     ss = []
     if isinstance(suite, str):

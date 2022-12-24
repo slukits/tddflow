@@ -6,7 +6,7 @@
 
 """
 module reporting provides the two report types *Default* and *TDD* which
-are used by pyunit to report about executed test runs.  It also provides
+are used by tddflow to report about executed test runs.  It also provides
 the abstract type *Report* which may be used to implement an other
 report type.  Use testing.Config to define which report should be used.
 """
@@ -88,7 +88,7 @@ class Default(Report):
     def print(self, suite: str, out: TextIO):
         if len(self.tests) == 0:
             return
-        print("pyunit: failing/logging suite-tests:", file=out)
+        print("tddflow: failing/logging suite-tests:", file=out)
         print("{} ({}/{})".format(
             suite, len(self.tests), self.fails_count), file=out)
         for name, attrs in self.tests.items():

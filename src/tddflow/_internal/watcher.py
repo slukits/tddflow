@@ -17,15 +17,15 @@ import multiprocessing
 import subprocess
 from queue import Queue, Empty
 
-pyunit_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
-if pyunit_path not in sys.path:
-    sys.path.insert(0, pyunit_path)
+tddflow_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
+if tddflow_path not in sys.path:
+    sys.path.insert(0, tddflow_path)
 
-from pyunit._internal.reporting import (
+from tddflow._internal.reporting import (
     JSN_TESTS_COUNT, JSN_FAILS_COUNT, JSN_TEST_SUITE, JSN_FAILS,
     JSN_TEST_LOGS)
 
-from pyunit._internal.tui import TUI, Args
+from tddflow._internal.tui import TUI, Args
 
 REPORT_ARG = '--report=json'
 
@@ -36,7 +36,7 @@ class DirNoPackage(Exception):
 
 class Dir:
     """
-    Dir represents a directory from pyunit's points of and may be
+    Dir represents a directory from tddflow's points of and may be
     passed to the watcher-modules main function in order to be watched
     for changes and executing test-runs appropriately.
     """
@@ -566,4 +566,4 @@ def watcher(
             tt = dir.test_modules_to_run()  # uses also the pool
             first = run_modules(pool, dir, tt, tui, first, frq)
         tui.restore()
-        print('\npyunit: gracefully stopped\n')
+        print('\ntddflow: gracefully stopped\n')

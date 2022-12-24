@@ -6,7 +6,7 @@
 
 from context import testing
 
-import pyunit._internal.watchergolden.pm1
+import tddflow._internal.watchergolden.pm1
 
 
 class TestsSuffixSuite:
@@ -15,7 +15,7 @@ class TestsSuffixSuite:
         t.log("report this test")
 
     def a_failing_suffix_test_in_tests(self, t: testing.T):
-        t.truthy(pyunit._internal.watchergolden.pm1.pm1f())
+        t.truthy(tddflow._internal.watchergolden.pm1.pm1f())
 
 
 if __name__ == '__main__':

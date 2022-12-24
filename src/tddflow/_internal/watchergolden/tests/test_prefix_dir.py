@@ -9,9 +9,9 @@ _ = sys
 
 from context import testing
 
-from pyunit._internal.watchergolden import pm2
+from tddflow._internal.watchergolden import pm2
 
-from pyunit._internal.watchergolden.flat.is_better.nest import deep
+from tddflow._internal.watchergolden.flat.is_better.nest import deep
 
 
 class TestsPrefixSuite:
