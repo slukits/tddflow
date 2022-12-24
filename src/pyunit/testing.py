@@ -57,6 +57,9 @@ implementations.
 """
 
 import traceback
+import re
+import sys
+import inspect
 from typing import (TextIO as _TextIO, Any as _Any, 
     Callable as _Callable, Tuple as _Tuple)
 from dataclasses import dataclass as _dataclass
@@ -81,7 +84,7 @@ class Config:
 
     - out: defines where given report prints to
 
-    - single: defines a test suite's single test to run.
+    - single: is a name of a test suite's single test to run.
     """
     reporter: reporting.Report | None = None
     out: _TextIO = _sys.stdout
@@ -102,10 +105,30 @@ def run(suite: _Any, config: Config | None = None):
 
         if __name__ == '__main__':
             pyunit.run(TestedSubject)
+
+    Note instead of the test suite also a string may be given which is
+    used as regular expression to match against class-names of executed
+    test module, e.g.
+
+        if __name__ == '__main__':
+            pyunit.run('Tested.*')
     """
-    _suite = suite if not isinstance(suite, type) else suite()
+    ss = []
+    if isinstance(suite, str):
+        regex = re.compile(suite)
+        mdl = inspect.getmodule(inspect.stack()[1][0])
+        for onm in dir(mdl):
+            o = getattr(mdl, onm)
+            if not inspect.isclass(o):
+                continue
+            if not regex.fullmatch(o.__name__):
+                continue
+            ss.append(o())
+    else:
+        ss.append(
+            suite if not isinstance(suite, type) else suite())
+
     config = config or Config()
-    
     report = config.reporter or (reporting.TDD() 
         if _REPORT_JSON in _sys.argv else reporting.Default())
     def counter(): return None
@@ -113,14 +136,25 @@ def run(suite: _Any, config: Config | None = None):
         counter = report.increase_test_count  # type: ignore
     except AttributeError:
         pass
+
+    for s in ss:
+        _run_suite(s, config, report, counter)
+
+
+def _run_suite(
+    suite: _Any, 
+    config: Config, 
+    report: reporting.Report,
+    counter: _Callable
+):
     if len(config.single):
-        _run_single_test(_suite, report, config, counter)
+        _run_single_test(suite, report, config, counter)
         return
-    tt, ss = _suite_methods(_suite)
-    if not _run_init(ss, report, _suite, config):
+    tt, ss = _suite_methods(suite)
+    if not _run_init(ss, report, suite, config):
         return
     for name in tt:
-        test = getattr(_suite, name)
+        test = getattr(suite, name)
         t = T(fail=lambda: report.fail(name),
             log=lambda msg: report.log(name, msg))
         if not _run_setup(ss, t):
@@ -135,7 +169,7 @@ def run(suite: _Any, config: Config | None = None):
             t.failed(short_traceback(''))
         _run_tear_down(ss, t)
     _run_finalize(ss, report)
-    report.print(_suite.__class__.__name__, config.out)
+    report.print(suite.__class__.__name__, config.out)
 
 
 def _run_init(

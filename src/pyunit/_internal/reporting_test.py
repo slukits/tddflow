@@ -82,5 +82,4 @@ class TDDReport:
 
 
 if __name__ == '__main__':
-    testing.run(DefaultReport)
-    testing.run(TDDReport)
+    testing.run('.*Report')
