@@ -29,8 +29,8 @@ DESCRIPTION
     The typical use cases of pyunit are:
         - write a failing test, i.e. pyunit shows you the red bar, make
           the test "green", refactor and write a failing test again ...
-        - if one quickly wants to examine a return/variable value one
-          can log it in a test and pyunit will report the logged value.
+        - if one quickly wants to examine a return/variable value it can
+          be logged in a test and pyunit will report the logged value.
 
 COMMAND LINE OPTIONS
     --dbg    pyunit runs all tests-modules it thinks it should
@@ -48,18 +48,18 @@ COMMAND LINE OPTIONS
             file name (Note paths are not handled).
 
     --frequency=0.3 
-            takes a float determine the frequency with which pyunit
+            takes a float determining the frequency with which pyunit
             checks the watched directory.
 
     --run-timeout=20.0
-            takes a float determine for how long pyunit waits for a test
-            module to execute before a timeout is reported.
+            takes a float determining for how long pyunit waits for a
+            test module to execute before a timeout is reported.
 
     --map='production/module.py->tests/test_module.py'
             takes two '->' separated paths which represent a production
             module and a test module in the watched package.  It may be
             an absolute path or a path relative to the watched
-            directories root-package.  Adding such a mapping has the
+            directory's root-package.  Adding such a mapping has the
             consequence that a modification of module.py triggers a run
             of test_module.py.
 

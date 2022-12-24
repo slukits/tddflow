@@ -4,6 +4,58 @@
 # Use of this source code is governed by a MIT-style
 # license that can be found in the LICENSE file.
 
+"""
+testing is the entry point for pyunit's features for implementing test
+suites.  The typical use case is
+
+    from pyunit.testing import run, T
+
+to implement a test suite:
+
+    class TestedSubject:
+
+        def init(self, t: T):
+            \"""setup fixtures which all tests have in common.\"""
+            pass
+
+        def setup(self, t: T):
+            \"""setup fixtures for each test individually.\"""
+            pass
+
+        def tear_down(self, t: T):
+            \"""clear resources obtained by setup.\"""
+            pass
+
+        def has_tested_behavior(self, t: T):
+            \"""
+            implement tests using t for test control flow and
+            assertions
+            \"""
+            t.fatal_if_not(t.truthy(True))
+
+        def finalize(self, t: T):
+            \"""clear resources obtained by init\"""
+            pass
+
+and to run the implemented test suite:
+
+    if __name__ == '__main__':
+        run(TestedSubject)
+
+For an enhanced usage you can also
+
+    from pyunit.testing import Config, reporting
+
+whereas Config lets you configure the test run if you for example
+want to run only a single test:
+
+    run(TestedSubject, Config(single='has_tested_behavior'))
+
+While reporting allows access to the abstract Report type to derive
+your own reporting.  See _internal/reporting.py for exemplary
+implementations.
+"""
+
 import traceback
 from typing import (TextIO as _TextIO, Any as _Any, 
     Callable as _Callable, Tuple as _Tuple)
@@ -21,7 +73,16 @@ _SPECIAL = { 'init', 'setup', 'tear_down', 'finalize' }  # type: set
 
 @_dataclass
 class Config:
-    """configuration for test-runs"""
+    """
+    configuration for test-runs
+
+    - reporter: is specifying the type for reporting the result of a
+      test-suite's run
+
+    - out: defines where given report prints to
+
+    - single: defines a test suite's single test to run.
+    """
     reporter: reporting.Report | None = None
     out: _TextIO = _sys.stdout
     single: str = ""

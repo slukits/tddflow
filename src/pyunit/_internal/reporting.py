@@ -5,10 +5,10 @@
 # license that can be found in the LICENSE file.
 
 """
-module reporting provides the two report type Default and TDD which are
-used by pyunit to report about executed test runs.  It also provides the
-abstract type Report which may be used to implement an other report.
-Use testing.Config to define which report should be used.
+module reporting provides the two report types *Default* and *TDD* which
+are used by pyunit to report about executed test runs.  It also provides
+the abstract type *Report* which may be used to implement an other
+report type.  Use testing.Config to define which report should be used.
 """
 
 from dataclasses import dataclass, field
@@ -70,6 +70,13 @@ class Report:
             t.logs.append(msg)
         else:
             t.logs.append(str(msg).strip('\\\'"'))
+
+    def print(self, suite: str, out: TextIO):
+        """
+        print the results of given suite's test-run to out.
+        Sub-types of Report must implement this method.
+        """
+        raise NotImplementedError()
 
 
 class Default(Report):
