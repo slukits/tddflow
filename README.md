@@ -1,7 +1,8 @@
-# gounit
+# tddflow
 
-Oh my, why an other testing framework?  Because implementing a testing
-framework is an excellent exercise to get into a language.  Following:
+[installation](##Installation) | [usage](##Usage)
+
+A finger exercise for Python.  Following:
 
 - beautiful is better then ugly (Tim Peters)
 - easy things should be easy, and hard things possible (Larry Wall)
@@ -72,7 +73,7 @@ for inheritance, no need for uppercase methods, no need for "marking"
 tests; i.e. noise through repetition is down to a minimum while our IDE
 will still offer us the T-API because of the type hinting.
 
-To make this little exercise (more) useful we want to add also a tddflow
+To make this little exercise (more) useful I want to add also a tddflow
 command
 
 ```
@@ -99,3 +100,54 @@ testing tool using the testing tool itself to run the tests may seem a
 bit like performing brain surgery on yourself." Doesn't that sound like
 fun?  [Tag along](https://github.com/slukits/tddflow/blob/main/01_ran.md)
 if you feel like it.
+
+
+## Installation
+
+
+    pip install tddflow
+
+
+
+## Usage
+
+    python -m tddflow
+
+starts the package watcher
+
+    python -m tddflow help
+
+documents tddflow's command line arguments.  The typical usage of
+tddflow for testing:
+
+    from tddflow.testing import run, T
+
+    class TestedSubject:
+
+        def init(self, t: T):
+            """setup fixtures which all tests have in common."""
+            pass
+
+        def setup(self, t: T):
+            """setup fixtures for each test individually."""
+            pass
+
+        def tear_down(self, t: T):
+            """clear resources obtained by setup."""
+            pass
+
+        def has_tested_behavior(self, t: T):
+            """
+            implement tests using t for test control flow and
+            assertions
+            """
+            t.fatal_if_not(t.truthy(True))
+
+        def finalize(self, t: T):
+            """clear resources obtained by init"""
+            pass
+
+    if __name__ == '__main__':
+        run(TestedSubject)
+
+See also tddflow.testing.Config for how to configure a tests-suite run.

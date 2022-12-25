@@ -80,11 +80,12 @@ class Config:
     configuration for test-runs
 
     - reporter: is specifying the type for reporting the result of a
-      test-suite's run
+      test-suite's run.  It defaults to reporting.Default or to
+      reporting.TDD if the --report=json flag is set.
 
-    - out: defines where given report prints to
+    - out: defines where given report prints to it defaults to sys.stdout.
 
-    - single: is a name of a test suite's single test to run.
+    - single: is an optional name of a test suite's single test to run.
     """
     reporter: reporting.Report | None = None
     out: _TextIO = _sys.stdout
