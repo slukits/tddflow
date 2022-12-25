@@ -1,6 +1,6 @@
 # tddflow
 
-[installation](##Installation) | [usage](##Usage)
+[installation](#installation) | [usage](#usage)
 
 A finger exercise for Python.  Following:
 
