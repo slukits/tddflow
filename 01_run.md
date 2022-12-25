@@ -1,14 +1,13 @@
-# Ran
+# Run
 
 If we develop a testing tool we want to be confident that it works
 properly and we want to start using it as quickly as possible.  Hence
 the tests of a suite should be run a falsy assertion should fail a test
 and a failed test should be reported.  Making these three things work in
-a minimal manner allows us to use the testing tool. 
+a minimal manner allows us to use the testing tool.  So lets start with
+the behavior 
 
-So lets start with the behavior 
-
-    "a suite's test methods are executed on a (suite) test run"
+"a suite's test methods are executed on a (suite) test run"
 
 This is already a quite big first step.  But lets feel bold today and
 see if we find something smaller along the way.  Please note I already
@@ -32,11 +31,11 @@ True
 
 A suite test is executed on a (suite) test run:
 
->>> from tddflow import runTests
+>>> from tddflow import run
 >>> s = TestSuite()
 >>> s.suiteTestHasRun
 False
->>> runTests(s)
+>>> run(s)
 >>> s.suiteTestHasRun
 True
 
@@ -45,11 +44,11 @@ A suite test has an T instance provided on execution:
 >>> s = TestSuite()
 >>> s.gotTestingTInstance
 False
->>> runTests(s)
+>>> run(s)
 >>> s.gotTestingTInstance
 True
 """
-from tddflow import runTests, T
+from tddflow import run, T
 
 
 class TestSuite:
@@ -84,13 +83,13 @@ feature will be leveraged to validate if a test run behaved expectedly.
 """
 A suite test fails if true assertion fails:
 
->>> from tddflow import runTests, Config
+>>> from tddflow import run, Config
 >>> s = TestTrueAssertion()
 >>> s.failedTrueAssertion
 False
 >>> s.passedTrueAssertion
 False
->>> runTests(s, Config(out=s.reportIO))
+>>> run(s, Config(out=s.reportIO))
 >>> s.failedTrueAssertion
 True
 >>> s.passedTrueAssertion

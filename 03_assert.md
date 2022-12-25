@@ -18,13 +18,13 @@ only assertion 'truthy' was already extended by the methods
 
 While any assertion is transformable into a True/False statement
 "expecting 'False' to be truthy" is not a very useful error message
-most of the time.  To be more expressive a few more specific assertion
+most of the time.  To be more expressive a few more specific assertions
 should be added:
 
 - falsy(bool[, str]) fails a test iff given bool is truthy
-- in_(Any, Iterable[Any][, str]) Note an [argument] argument is 
+- in_(Any, Iterable[Any][, str]) Note an [, arg] argument is 
   optional while collection[type-info] specifies a collection's
-  element's type.  *in* fails the test if given element is not in
+  element's type.  *in_* fails the test if given element is not in
   given iterable.
 - not_in(Any, Iterable[Any][, str]) fails the test if given element
   is in given iterable.

@@ -98,7 +98,7 @@ my experience.
 Kent Beck writes in "Test-Driven Development By Example": "Driving a
 testing tool using the testing tool itself to run the tests may seem a
 bit like performing brain surgery on yourself." Doesn't that sound like
-fun?  [Tag along](https://github.com/slukits/tddflow/blob/main/01_ran.md)
+fun?  [Tag along](https://github.com/slukits/tddflow/blob/main/01_run.md)
 if you feel like it.
 
 

@@ -72,11 +72,11 @@ this is for an other day and needs a bigger refactoring since then the
 structural analysis would the be of a complexity that a smart caching
 feature of this analysis would be profitable especially since typically
 between to test runs only one production module is modified.  It also
-turned out that we need a non blocking keyboard input and that SIGINT
-should be handled in order to gracefully shout down and to provide a
-little menu.  Note along the way the package file structure was
-refactored to suite pip's packaging mechanism in order to publish
-tddflow.
+turned out that we need a non blocking keyboard input and a little menu
+to let the user rerun all tests if wanted and to quit the watcher.
+Further more the SIGINT should be handled in order to gracefully shut
+down.  Note along the way the package file structure was refactored to
+suite pip's packaging mechanism in order to publish tddflow.
 
 Since we can execute tests and figure which test modules to run it's
 time for more [assertions](03_assert.md).

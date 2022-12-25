@@ -58,7 +58,6 @@ implementations.
 
 import traceback
 import re
-import sys
 import inspect
 from typing import (TextIO as _TextIO, Any as _Any, 
     Callable as _Callable, Tuple as _Tuple)
@@ -81,7 +80,7 @@ class Config:
 
     - reporter: is specifying the type for reporting the result of a
       test-suite's run.  It defaults to reporting.Default or to
-      reporting.TDD if the --report=json flag is set.
+      reporting.TDD in case the --report=json flag is set.
 
     - out: defines where given report prints to it defaults to sys.stdout.
 
@@ -204,13 +203,17 @@ def short_traceback(indent: str) -> str:
 
 def _run_setup(ss: '_Specials', t: T) -> bool:
     if ss.setup is None:
+        t.has_setup_passed = True
         return True
     try:
         ss.setup(t)
     except:
         indent = '  '
         t.failed(f'setup failed:\n{indent}' + short_traceback(indent))
+        t.has_setup_passed = False
         return False
+    else:
+        t.has_setup_passed = True
     return True
     
 
